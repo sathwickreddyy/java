@@ -1,11 +1,11 @@
 ## Implementation Plan
 
-![Direct Channel Example]("./direct_channel_example.png")
+![Direct Channel Example]("direct_channel_example.png")
 
 
 ## Code
 
-![Code Explanation]("./code_explain.jpeg")
+![Code Explanation]("code_explain.jpeg")
 
 
 ## Testing
