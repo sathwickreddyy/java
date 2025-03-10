@@ -1,6 +1,6 @@
 # Implementations So Far
 
-## Cache
+## Cache LLD
 
 <p align="center">
   <img src="https://github.com/sathwickreddyy/java/blob/main/Java_LLD_OOPS/src/main/java/com/java/oops/cache/architecture.png" alt="Cache Implementation"/>
