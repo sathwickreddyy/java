@@ -1,4 +1,3 @@
-![Caching Architecture](./architecture.png)
 Here's an end-to-end implementation of the provided caching architecture, including proper design patterns and comprehensive documentation:
 
 ## Implementation Overview
@@ -99,27 +98,63 @@ public class InMemoryCache<K,V> implements AbstractCache<K,V> {
 ### Distributed Cache Implementation (Redis Example):
 
 ```java
-public class RedisDistributedCache<K,V> implements AbstractCache<K,V> {
+public class RedisDistributedCache<K extends Serializable, V extends Serializable> implements AbstractCache<K, V> {
+
     private final Jedis redisClient;
 
-    public RedisDistributedCache() {
-        redisClient = new Jedis("localhost");
+    public RedisDistributedCache(Jedis redisClient) {
+        this.redisClient = redisClient;
     }
-    
+
     @Override
     public void put(K key, V value) {
-        redisClient.set(serialize(key), serialize(value));
+        try {
+            byte[] serializedKey = serialize(key);
+            byte[] serializedValue = serialize(value);
+            redisClient.set(serializedKey, serializedValue);
+        } catch (IOException | JedisException e) {
+            // handle exception
+        }
     }
-    
+
     @Override
     public Optional<V> get(K key) {
-        String result = redisClient.get(serialize(key));
-        return result == null ? Optional.empty() : Optional.of(deserialize(result));
+        try {
+            byte[] serializedKey = serialize(key);
+            byte[] result = redisClient.get(serializedKey);
+            if (result == null) {
+                return Optional.empty();
+            }
+            V value = deserialize(result);
+            return Optional.ofNullable(value);
+        } catch (IOException | ClassNotFoundException | JedisException e) {
+            return Optional.empty();
+        }
     }
-    
+
     @Override
     public void evict(K key) {
-        redisClient.del(serialize(key));
+        try {
+            byte[] serializedKey = serialize(key);
+            redisClient.del(serializedKey);
+        } catch (IOException | JedisException e) {
+            // handle exception
+        }
+    }
+    
+    private byte[] serialize(Object obj) throws IOException {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+             ObjectOutputStream out = new ObjectOutputStream(bos)) {
+            out.writeObject(obj);
+            return bos.toByteArray();
+        }
+    }
+
+    private V deserialize(byte[] bytes) throws IOException, ClassNotFoundException {
+        try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+             ObjectInputStream in = new ObjectInputStream(bis)) {
+            return (V) in.readObject();
+        }
     }
 }
 ```
