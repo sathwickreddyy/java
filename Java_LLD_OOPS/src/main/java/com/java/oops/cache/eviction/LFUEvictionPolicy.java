@@ -1,5 +1,11 @@
 package com.java.oops.cache.eviction;
 
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+
 /**
  * LFU (Least Frequently Used) Cache Implementation
  *
@@ -24,24 +30,82 @@ package com.java.oops.cache.eviction;
  *
  * @param <K> Type of key used in the cache
  */
+@Slf4j
 public class LFUEvictionPolicy<K> implements EvictionPolicy<K> {
-    /**
-     * Records the access of the key
-     *
-     * @param key of type K
-     */
-    @Override
-    public void recordAccess(K key) {
 
+    private final Map<K, Integer> keyToFreq;
+    private final Map<Integer, LinkedHashSet<K>> freqToKeys;
+    private int minFreq;
+
+    /**
+     * Constructs an LFU Eviction Policy instance.
+     */
+    public LFUEvictionPolicy() {
+        this.keyToFreq = new HashMap<>();
+        this.freqToKeys = new HashMap<>();
+        this.minFreq = 0;
+        log.info("Initialized LFU Eviction Policy");
     }
 
     /**
-     * Evicts the key
+     * Records access of a key and updates its frequency.
      *
-     * @return Key of type K
+     * @param key Key accessed.
+     */
+    @Override
+    public void recordAccess(K key) {
+        int oldFreq = keyToFreq.getOrDefault(key, 0);
+        int newFreq = oldFreq + 1;
+        keyToFreq.put(key, newFreq);
+
+        log.debug("Access recorded for key: {} | oldFreq: {} | newFreq: {}", key, oldFreq, newFreq);
+
+        // Remove from old frequency set if present
+        if (oldFreq > 0) {
+            LinkedHashSet<K> oldSet = freqToKeys.get(oldFreq);
+            oldSet.remove(key);
+            if (oldSet.isEmpty()) {
+                freqToKeys.remove(oldFreq);
+                if (oldFreq == minFreq) {
+                    minFreq++;
+                }
+            }
+        } else {
+            // New key accessed first time
+            minFreq = 1;
+        }
+
+        // Add to new frequency set
+        freqToKeys.computeIfAbsent(newFreq, k -> new LinkedHashSet<>()).add(key);
+
+        log.debug("Updated freq-to-key mapping: {}", freqToKeys);
+    }
+
+    /**
+     * Evicts the least frequently used key. If multiple keys have same frequency,
+     * evicts the oldest one among them.
+     *
+     * @return Evicted key or null if no keys are available.
      */
     @Override
     public K evict() {
-        return null;
+        if (keyToFreq.isEmpty()) {
+            log.warn("Eviction requested but cache is empty");
+            return null;
+        }
+
+        LinkedHashSet<K> keysWithMinFreq = freqToKeys.get(minFreq);
+        K evictKey = keysWithMinFreq.iterator().next();
+
+        // Remove evicted key from data structures
+        keysWithMinFreq.remove(evictKey);
+        if (keysWithMinFreq.isEmpty()) {
+            freqToKeys.remove(minFreq);
+            // After eviction, next insertion/access will reset minFreq appropriately
+        }
+        keyToFreq.remove(evictKey);
+
+        log.info("Evicted least frequently used key: {} with frequency {}", evictKey, minFreq);
+        return evictKey;
     }
 }
