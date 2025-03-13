@@ -25,7 +25,6 @@ public class FIFOEvictionPolicy<K> implements EvictionPolicy<K> {
      */
     public FIFOEvictionPolicy() {
         this.queue = new LinkedList<>();
-        log.info("Initialized FIFO Eviction Policy");
     }
 
     /**
@@ -40,9 +39,9 @@ public class FIFOEvictionPolicy<K> implements EvictionPolicy<K> {
     public synchronized void recordAccess(K key) {
         if (!queue.contains(key)) {
             queue.offer(key);
-            log.debug("Key recorded: {}. Current queue state: {}", key, queue);
+            log.trace("Key recorded: {}. Current queue state: {}", key, queue);
         } else {
-            log.debug("Key {} already present. No action taken.", key);
+            log.trace("Key {} already present. No action taken.", key);
         }
     }
 
@@ -58,7 +57,7 @@ public class FIFOEvictionPolicy<K> implements EvictionPolicy<K> {
             log.warn("Eviction requested but cache is empty");
             return null;
         }
-        log.info("Evicted oldest inserted key: {}", evictedKey);
+        log.trace("Evicted oldest inserted key: {}", evictedKey);
         return evictedKey;
     }
 }

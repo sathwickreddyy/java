@@ -48,9 +48,9 @@ public class LRUEvictionPolicy<K> implements EvictionPolicy<K> {
      */
     @Override
     public synchronized void recordAccess(K key) {
-        log.debug("Access recorded for key: {}", key);
+        log.trace("Access recorded for key: {}", key);
         orderAccessMap.put(key, Boolean.TRUE);
-        log.debug("orderAccessMap state after access: {}", orderAccessMap.keySet());
+        log.trace("orderAccessMap state after access: {}", orderAccessMap.keySet());
     }
 
     /**
@@ -66,7 +66,7 @@ public class LRUEvictionPolicy<K> implements EvictionPolicy<K> {
         }
         K evictedKey = orderAccessMap.keySet().iterator().next();
         orderAccessMap.remove(evictedKey);
-        log.info("Manually evicted LRU key: {}", evictedKey);
+        log.trace("Manually evicted LRU key: {}", evictedKey);
         return evictedKey;
     }
 }

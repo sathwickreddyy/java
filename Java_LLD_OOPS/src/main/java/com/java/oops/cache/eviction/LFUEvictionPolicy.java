@@ -44,7 +44,6 @@ public class LFUEvictionPolicy<K> implements EvictionPolicy<K> {
         this.keyToFreq = new HashMap<>();
         this.freqToKeys = new HashMap<>();
         this.minFreq = 0;
-        log.info("Initialized LFU Eviction Policy");
     }
 
     /**
@@ -58,7 +57,7 @@ public class LFUEvictionPolicy<K> implements EvictionPolicy<K> {
         int newFreq = oldFreq + 1;
         keyToFreq.put(key, newFreq);
 
-        log.debug("Access recorded for key: {} | oldFreq: {} | newFreq: {}", key, oldFreq, newFreq);
+        log.trace("Access recorded for key: {} | oldFreq: {} | newFreq: {}", key, oldFreq, newFreq);
 
         // Remove from old frequency set if present
         if (oldFreq > 0) {
@@ -78,7 +77,7 @@ public class LFUEvictionPolicy<K> implements EvictionPolicy<K> {
         // Add to new frequency set
         freqToKeys.computeIfAbsent(newFreq, k -> new LinkedHashSet<>()).add(key);
 
-        log.debug("Updated freq-to-key mapping: {}", freqToKeys);
+        log.trace("Updated freq-to-key mapping: {}", freqToKeys);
     }
 
     /**
@@ -105,7 +104,7 @@ public class LFUEvictionPolicy<K> implements EvictionPolicy<K> {
         }
         keyToFreq.remove(evictKey);
 
-        log.info("Evicted least frequently used key: {} with frequency {}", evictKey, minFreq);
+        log.trace("Evicted least frequently used key: {} with frequency {}", evictKey, minFreq);
         return evictKey;
     }
 }
