@@ -31,7 +31,7 @@ public class InMemoryCache<K, V> implements AbstractCache<K, V> {
      */
     @Override
     public void put(K key, V value) {
-        if(cache.size() == capacity) {
+        if(!cache.containsKey(key) && cache.size() == capacity) {
             log.debug("Cache is full, evicting key according to eviction policy");
             K evictedKey = evictionPolicy.evict();
             cache.remove(evictedKey);
