@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package com.java.pubsub.orderprocessing.protobuf;
+
+/*
+In Protocol Buffers, field numbers are used to identify each field in a message. This is necessary because the field
+names are not stored in the serialized data, only the field numbers. This approach has several benefits:
+  **Efficient serialization**: By using numbers instead of names, the serialized data is smaller and more efficient to transmit.
+  **Backward compatibility**: If you change the name of a field, the serialized data remains compatible, as long as the field number remains the same.
+  **Forward compatibility**: If you add a new field to a message, older code can still deserialize the data, ignoring the new field.
+In summary, field numbers are used to enable efficient, backward-compatible, and forward-compatible serialization of data in Protocol Buffers.
+ */
+message Order {
+  string orderId = 1;
+  string customerName = 2;
+  string productId = 3;
+  int32 quantity = 4;
+  int64 timestamp = 5;
+}
