@@ -40,6 +40,9 @@ dependencies {
 
     // personal libraries
     implementation 'com.java:personal-library:0.1.1'
+
+    // google pubsub
+    implementation 'com.google.cloud:spring-cloud-gcp-starter-pubsub:4.9.2'
 }
 
 test {
@@ -50,11 +53,21 @@ protobuf {
     protoc {
         artifact = 'com.google.protobuf:protoc:3.25.1'
     }
+
     generateProtoTasks {
         all().each { task ->
             task.builtins {
                 java {}
             }
+        }
+    }
+}
+
+// Specify proto source directory inside sourceSets block
+sourceSets {
+    main {
+        proto {
+            srcDir 'src/main/resources/proto'
         }
     }
 }

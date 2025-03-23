@@ -10,6 +10,8 @@ names are not stored in the serialized data, only the field numbers. This approa
   **Forward compatibility**: If you add a new field to a message, older code can still deserialize the data, ignoring the new field.
 In summary, field numbers are used to enable efficient, backward-compatible, and forward-compatible serialization of data in Protocol Buffers.
  */
+option java_outer_classname = "OrderProto";
+
 message Order {
   string orderId = 1;
   string customerName = 2;
