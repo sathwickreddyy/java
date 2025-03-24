@@ -14,6 +14,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.messaging.MessageChannel;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -96,18 +98,24 @@ public class KafkaConfig {
 
     /**
      * Kafka consumer for durable order subscription
+     *  <pre>
+     *  🧩 orders-group → This is the Consumer Group ID used to track offsets of consumed messages.
+     * 	•	Used to track offsets of consumed messages.
+     * 	•	Helps Kafka coordinate load balancing and parallel processing among multiple consumers.
+     * 	•	Multiple consumers with the same group ID will share the work (consume different partitions).
+     * 	</pre>
+     *
+     *  <pre>
+     *  📨 orders-topic → This is the Kafka Topic Name
+     * 	•	The name of the topic your app subscribes to in order to receive messages.
+     *  </pre>
      */
-    @Bean(name = "durableKafkaOrderConsumer")
-    public KafkaConsumer<String, OrderProto.Order> durableConsumer() {
-        return new KafkaConsumer<>(consumerProperties("durable-order-group"));
-    }
-
-    /**
-     * Kafka consumer for non-durable order subscription
-     */
-    @Bean(name = "nonDurableKafkaOrderConsumer")
-    public KafkaConsumer<String, OrderProto.Order> nonDurableConsumer() {
-        return new KafkaConsumer<>(consumerProperties("non-durable-order-group"));
+    @Bean(name = "kafkaConsumer")
+    public KafkaConsumer<String, OrderProto.Order> kafkaConsumer() {
+        KafkaConsumer<String, OrderProto.Order> consumer =
+                new KafkaConsumer<>(consumerProperties("orders-group"));
+        consumer.subscribe(Collections.singleton("orders-topic"));
+        return consumer;
     }
 
     /**
