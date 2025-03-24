@@ -1,10 +1,12 @@
 plugins {
     id 'java'
     id 'com.google.protobuf' version '0.9.4'
+    id 'org.springframework.boot' version '3.2.2'
 }
 
 group = 'com.java'
 version = '1.0-SNAPSHOT'
+sourceCompatibility = '17'
 
 repositories {
     mavenCentral()
@@ -23,7 +25,10 @@ repositories {
 dependencies {
     implementation 'org.springframework:spring-context:6.1.14'
     implementation 'org.springframework.integration:spring-integration-core:6.2.2'
-
+    implementation platform('org.springframework.boot:spring-boot-dependencies:3.2.2')
+    implementation 'org.springframework.boot:spring-boot-starter'
+    // other dependencies you need
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation platform('org.junit:junit-bom:5.10.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
 
