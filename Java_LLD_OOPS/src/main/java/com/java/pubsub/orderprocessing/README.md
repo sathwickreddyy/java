@@ -45,3 +45,45 @@ It includes Kafka producers and consumers, Spring Integration channels, and mess
 5. **Serialization Efficiency**: Protobuf ensures compact, efficient data transfer over Kafka.
 
 This setup is ideal for systems requiring reliable, scalable, and efficient order processing with both durable and non-durable workflows.
+
+## Kafka Setup
+
+```bash
+# Install Kafka (includes Zookeeper)
+brew install kafka
+
+# Start Zookeeper in one terminal
+brew services start zookeeper
+
+# Start Kafka in another terminal
+brew services start kafka
+
+# Create a Kafka topic
+kafka-topics --create --topic orders-topic \
+  --bootstrap-server localhost:9092 \
+  --partitions 1 \
+  --replication-factor 1
+  
+# Verify topic creation
+kafka-topics --list --bootstrap-server localhost:9092
+
+# Add to consumer group
+kafka-console-consumer \
+  --topic orders-topic \
+  --bootstrap-server localhost:9092 \
+  --group my-consumer-group \
+  --from-beginning
+
+# Producer CLI
+kafka-console-producer --topic orders-topic --bootstrap-server localhost:9092
+
+# Consumer CLI
+kafka-console-consumer --topic orders-topic --from-beginning --bootstrap-server localhost:9092
+
+# To Create Consumer Group and Start Consumer
+kafka-console-consumer --bootstrap-server localhost:9092 --from-beginning --group orders-group --topic orders-topic
+
+# To Stop Services
+brew services stop kafka
+brew services stop zookeeper
+```

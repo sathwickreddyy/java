@@ -2,22 +2,23 @@ package com.java.pubsub.orderprocessing.config;
 
 
 import com.java.pubsub.orderprocessing.protobuf.OrderProto;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.integration.annotation.InboundChannelAdapter;
-import org.springframework.integration.annotation.Poller;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.GenericMessage;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
+@Slf4j
 @Component
 public class KafkaInboundAdapter {
 
     private final KafkaConsumer<String, OrderProto.Order> kafkaConsumer;
-    @Qualifier("defaultKafkaChannel")
     private final MessageChannel kafkaOutputChannel;
 
     public KafkaInboundAdapter(KafkaConsumer<String, OrderProto.Order> kafkaConsumer, MessageChannel kafkaOutputChannel) {
@@ -25,9 +26,30 @@ public class KafkaInboundAdapter {
         this.kafkaOutputChannel = kafkaOutputChannel;
     }
 
-    @InboundChannelAdapter(value = "kafkaOutputChannel", poller = @Poller(fixedDelay = "5000"))
-    public void pollOrders() {
-        ConsumerRecords<String, OrderProto.Order> records = kafkaConsumer.poll(Duration.ofMillis(1000));
-        records.forEach(record -> kafkaOutputChannel.send(new GenericMessage<>(record.value())));
+    public List<OrderProto.Order> pollOrders() {
+        try {
+            ConsumerRecords<String, OrderProto.Order> records = kafkaConsumer.poll(Duration.ofMillis(1000));
+            log.info("Received {} records from Kafka", records.count());
+            List<OrderProto.Order> orders = new ArrayList<>();
+
+            records.forEach(record -> {
+                orders.add(record.value());
+                kafkaOutputChannel.send(new GenericMessage<>(record.value()));
+            });
+            if(!orders.isEmpty()) {
+                log.info("Received {} orders from Kafka", orders.size());
+                return orders;
+            }
+        }
+        catch (org.apache.kafka.common.errors.WakeupException e) {
+            // Handle consumer shutdown
+            return Collections.emptyList();
+        }
+        catch (org.apache.kafka.common.KafkaException e) {
+            // Handle Kafka-specific errors
+            return Collections.emptyList();
+        }
+        return null;
     }
 }
+

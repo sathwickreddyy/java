@@ -11,11 +11,9 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.integration.channel.DirectChannel;
-import org.springframework.messaging.MessageChannel;
+import org.springframework.context.annotation.ImportResource;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Properties;
 
 /**
@@ -41,6 +39,7 @@ import java.util.Properties;
  * }</pre>
  */
 @Configuration
+@ImportResource("classpath:/integration/pubsub-integration.xml")
 public class KafkaConfig {
 
     /**
@@ -59,6 +58,7 @@ public class KafkaConfig {
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaProtobufSerializer.class.getName());
+        props.put("schema.registry.url", "http://localhost:8081");
         return props;
     }
 
@@ -83,6 +83,7 @@ public class KafkaConfig {
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaProtobufDeserializer.class.getName());
         props.put("specific.protobuf.value.type", OrderProto.Order.class.getName());
+        props.put("schema.registry.url", "http://localhost:8081");
         return props;
     }
 
@@ -92,7 +93,7 @@ public class KafkaConfig {
      * @return a {@link KafkaProducer} configured for sending Protobuf messages
      */
     @Bean
-    public KafkaProducer<String, OrderProto.Order> orderProducer() {
+    public KafkaProducer<String, OrderProto.Order> kafkaOrderProducer() {
         return new KafkaProducer<>(producerProperties());
     }
 
@@ -112,22 +113,13 @@ public class KafkaConfig {
      */
     @Bean(name = "kafkaConsumer")
     public KafkaConsumer<String, OrderProto.Order> kafkaConsumer() {
-        KafkaConsumer<String, OrderProto.Order> consumer =
-                new KafkaConsumer<>(consumerProperties("orders-group"));
-        consumer.subscribe(Collections.singleton("orders-topic"));
-        return consumer;
-    }
-
-    /**
-     * Defines a Spring Integration {@link DirectChannel} bean named {@code pubsubInputChannel}.
-     * <p>
-     * This channel can be injected into service activators or adapters to handle
-     * messages synchronously.
-     *
-     * @return a new {@link DirectChannel} instance
-     */
-    @Bean(name = "defaultKafkaChannel")
-    public MessageChannel defaultChannel() {
-        return new DirectChannel();
+        try {
+            KafkaConsumer<String, OrderProto.Order> consumer =
+                    new KafkaConsumer<>(consumerProperties("orders-group"));
+            consumer.subscribe(Collections.singleton("orders-topic"));
+            return consumer;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create Kafka consumer: " + e.getMessage(), e);
+        }
     }
 }

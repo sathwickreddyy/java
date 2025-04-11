@@ -11,18 +11,35 @@
            https://www.springframework.org/schema/integration/spring-integration.xsd
            http://www.springframework.org/schema/context
            https://www.springframework.org/schema/context/spring-context.xsd">
+<!--    <bean id="kafkaInboundAdapter">-->
+<!--        <constructor-arg ref="kafkaOutputChannel" />-->
+<!--    </bean>-->
+<!--    <bean id="durableOrderSubscriber"/>-->
+<!--    <bean id="nonDurableOrderSubscriber"/>-->
 
     <!-- Channels -->
-    <int:channel id="kafkaOutputChannel"/>
-    <int:channel id="durableInputChannel"/>
-    <int:channel id="nonDurableInputChannel"/>
+    <int:publish-subscribe-channel id="kafkaOutputChannel"/>
+    <int:channel id="adapterResponseChannel"/>
+<!--    <int:channel id="durableInputChannel"/>-->
+<!--    <int:channel id="nonDurableInputChannel"/>-->
+
+    <!-- Define the inbound adapter in XML instead of using annotations -->
+    <int:inbound-channel-adapter channel="adapterResponseChannel"
+                                 ref="kafkaInboundAdapter"
+                                 method="pollOrders">
+        <int:poller fixed-delay="5000"/>
+    </int:inbound-channel-adapter>
 
     <!-- Service activators -->
-    <int:service-activator input-channel="durableInputChannel"
+    <int:service-activator input-channel="kafkaOutputChannel"
                            ref="durableOrderSubscriber"
                            method="handleMessage" />
 
-    <int:service-activator input-channel="nonDurableInputChannel"
+    <int:service-activator input-channel="kafkaOutputChannel"
                            ref="nonDurableOrderSubscriber"
                            method="handleMessage" />
+
+    <int:service-activator input-channel="adapterResponseChannel"
+                           ref="nonDurableOrderSubscriber"
+                           method="printBatchMessages" />
 </beans>

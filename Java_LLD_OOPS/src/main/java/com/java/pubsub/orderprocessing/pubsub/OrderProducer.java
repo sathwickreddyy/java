@@ -1,6 +1,7 @@
 package com.java.pubsub.orderprocessing.pubsub;
 
 import com.java.pubsub.orderprocessing.protobuf.OrderProto.Order;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.stereotype.Component;
@@ -26,10 +27,11 @@ import org.springframework.stereotype.Component;
  * orderProducer.sendOrder("orders-topic", order);
  * }</pre>
  */
+@Slf4j
 @Component
 public class OrderProducer {
 
-    private final KafkaProducer<String, Order> producer;
+    private final KafkaProducer<String, Order> kafkaOrderProducer;
 
     /**
      * Constructs an {@code OrderProducer} with the given KafkaProducer.
@@ -37,7 +39,7 @@ public class OrderProducer {
      * @param producer Kafka producer configured for {@link Order} Protobuf messages
      */
     public OrderProducer(KafkaProducer<String, Order> producer) {
-        this.producer = producer;
+        this.kafkaOrderProducer = producer;
     }
 
     /**
@@ -49,8 +51,9 @@ public class OrderProducer {
      * @param order the {@link Order} message to send
      */
     public void sendOrder(String topic, Order order) {
+        log.info("Sending order: orderId={}, data={}", order.getOrderId(), order);
         ProducerRecord<String, Order> record = new ProducerRecord<>(topic, order.getOrderId(), order);
-        producer.send(record);
+        kafkaOrderProducer.send(record);
     }
 
     /**
@@ -59,6 +62,6 @@ public class OrderProducer {
      * Should be called during application shutdown to release Kafka resources gracefully.
      */
     public void close() {
-        producer.close();
+        kafkaOrderProducer.close();
     }
 }
