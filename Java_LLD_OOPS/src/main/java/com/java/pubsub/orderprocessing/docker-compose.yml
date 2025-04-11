@@ -34,3 +34,13 @@ services:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry  # Required hostname
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:29092
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+
+  kafka-tools:
+    image: confluentinc/cp-schema-registry:7.7.1  # Contains Protobuf tools
+    container_name: kafka-tools
+    depends_on:
+      - kafka
+      - schema-registry
+    environment:
+      SCHEMA_REGISTRY_URL: http://schema-registry:8081
+    command: sleep infinity

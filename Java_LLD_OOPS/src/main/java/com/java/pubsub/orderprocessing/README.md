@@ -87,3 +87,16 @@ kafka-console-consumer --bootstrap-server localhost:9092 --from-beginning --grou
 brew services stop kafka
 brew services stop zookeeper
 ```
+
+```
+# With docker compose
+
+sathwick@Mac-3335 orderprocessing % docker exec -it kafka-tools kafka-protobuf-console-consumer \
+  --bootstrap-server kafka:29092 \
+  --topic orders-topic \
+  --from-beginning \
+  --property schema.registry.url=http://schema-registry:8081 \
+
+[//]: # (  --group orders-group)
+
+```

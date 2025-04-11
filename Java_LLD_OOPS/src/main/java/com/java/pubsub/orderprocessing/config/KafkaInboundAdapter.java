@@ -28,8 +28,8 @@ public class KafkaInboundAdapter {
 
     public List<OrderProto.Order> pollOrders() {
         try {
+            Thread.sleep(500); // Allow producer to send first
             ConsumerRecords<String, OrderProto.Order> records = kafkaConsumer.poll(Duration.ofMillis(1000));
-            log.info("Received {} records from Kafka", records.count());
             List<OrderProto.Order> orders = new ArrayList<>();
 
             records.forEach(record -> {
@@ -48,6 +48,8 @@ public class KafkaInboundAdapter {
         catch (org.apache.kafka.common.KafkaException e) {
             // Handle Kafka-specific errors
             return Collections.emptyList();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
         return null;
     }

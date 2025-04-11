@@ -2,7 +2,9 @@ package com.java.pubsub.orderprocessing.config;
 
 import com.java.pubsub.orderprocessing.protobuf.OrderProto;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer;
+import io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializerConfig;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufSerializer;
+import io.confluent.kafka.serializers.protobuf.KafkaProtobufSerializerConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -58,7 +60,8 @@ public class KafkaConfig {
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaProtobufSerializer.class.getName());
-        props.put("schema.registry.url", "http://localhost:8081");
+        props.put(KafkaProtobufSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG, "http://localhost:8081");
+        props.put(KafkaProtobufSerializerConfig.AUTO_REGISTER_SCHEMAS, "true"); // Auto-register schemas
         return props;
     }
 
@@ -82,10 +85,12 @@ public class KafkaConfig {
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaProtobufDeserializer.class.getName());
-        props.put("specific.protobuf.value.type", OrderProto.Order.class.getName());
-        props.put("schema.registry.url", "http://localhost:8081");
+        props.put(KafkaProtobufDeserializerConfig.SCHEMA_REGISTRY_URL_CONFIG, "http://localhost:8081");
+        props.put(KafkaProtobufDeserializerConfig.SPECIFIC_PROTOBUF_VALUE_TYPE, OrderProto.Order.class.getName());
+        props.put(KafkaProtobufDeserializerConfig.AUTO_REGISTER_SCHEMAS, "true");
         return props;
     }
+
 
     /**
      * Spring bean that provides a Kafka producer for publishing {@link OrderProto.Order} messages.
