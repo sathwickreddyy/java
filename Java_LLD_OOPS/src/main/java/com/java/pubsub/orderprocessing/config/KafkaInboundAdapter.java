@@ -33,6 +33,9 @@ public class KafkaInboundAdapter {
             List<OrderProto.Order> orders = new ArrayList<>();
 
             records.forEach(record -> {
+                if(record.value() == null) {
+                    return;
+                }
                 orders.add(record.value());
                 kafkaOutputChannel.send(new GenericMessage<>(record.value()));
             });
