@@ -11,17 +11,10 @@
            https://www.springframework.org/schema/integration/spring-integration.xsd
            http://www.springframework.org/schema/context
            https://www.springframework.org/schema/context/spring-context.xsd">
-<!--    <bean id="kafkaInboundAdapter">-->
-<!--        <constructor-arg ref="kafkaOutputChannel" />-->
-<!--    </bean>-->
-<!--    <bean id="durableOrderSubscriber"/>-->
-<!--    <bean id="nonDurableOrderSubscriber"/>-->
 
     <!-- Channels -->
     <int:publish-subscribe-channel id="kafkaOutputChannel"/>
     <int:channel id="adapterResponseChannel"/>
-<!--    <int:channel id="durableInputChannel"/>-->
-<!--    <int:channel id="nonDurableInputChannel"/>-->
 
     <!-- Define the inbound adapter in XML instead of using annotations -->
     <int:inbound-channel-adapter channel="adapterResponseChannel"
