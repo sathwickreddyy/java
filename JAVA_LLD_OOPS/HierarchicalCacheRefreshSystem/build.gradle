@@ -21,15 +21,24 @@ configurations {
 
 repositories {
     mavenCentral()
+    maven {
+        url 'https://maven.pkg.github.com/sathwickreddyy/java-personal-library'
+        credentials {
+            username = 'sathwickreddyy'
+            password = System.getenv("GITHUB_TOKEN")
+        }
+    }
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'redis.clients:jedis:5.1.0' // latest stable version
     implementation 'org.springframework.boot:spring-boot-starter-web'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    implementation 'com.java:personal-library:0.1.1'
 }
 
 tasks.named('test') {
