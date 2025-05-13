@@ -67,3 +67,36 @@ public class ApiController {
         return ResponseEntity.ok(sampleResponseService.getSampleResponseWithoutLeaderElection());
     }
 }
+
+/*
+Testing in docker
+
+import requests
+from concurrent.futures import ThreadPoolExecutor
+
+urls = [
+    "http://localhost:8081/testDistributedCache",
+    "http://localhost:8082/testDistributedCache",
+    "http://localhost:8083/testDistributedCache",
+    "http://localhost:8084/testDistributedCache"
+]
+
+urls_without_locking = [
+    "http://localhost:8081/testDistributedCacheWithoutLeaderElection",
+    "http://localhost:8082/testDistributedCacheWithoutLeaderElection",
+    "http://localhost:8083/testDistributedCacheWithoutLeaderElection",
+    "http://localhost:8084/testDistributedCacheWithoutLeaderElection"
+]
+
+def call_api(url):
+    try:
+        response = requests.get(url)
+        print(f"{url} -> {response.status_code}")
+    except Exception as e:
+        print(f"{url} -> Error: {str(e)}")
+
+with ThreadPoolExecutor(max_workers=4) as executor:
+    executor.map(call_api, urls_without_locking)
+
+
+ */
