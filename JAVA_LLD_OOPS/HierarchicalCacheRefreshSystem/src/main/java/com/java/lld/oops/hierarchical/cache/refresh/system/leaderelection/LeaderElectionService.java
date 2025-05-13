@@ -33,6 +33,7 @@ public class LeaderElectionService {
         }
         log.info("Trying to become leader");
         redisDistributedLock.acquireLock(LEADER_KEY, SystemIdentifierUtil.getSystemUniqueKey(), 60000);
+        log.info("{} Became leader!", SystemIdentifierUtil.getSystemUniqueKey());
     }
 
     public void electLeader() {

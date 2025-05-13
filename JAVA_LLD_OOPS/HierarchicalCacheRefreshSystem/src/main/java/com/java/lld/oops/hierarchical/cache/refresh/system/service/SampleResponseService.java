@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -30,23 +31,29 @@ public class SampleResponseService {
             log.info("Updating in memory cache");
             inMemoryCache.put(uniqueId, sampleResponseList);
         }
-        try {
-            leaderElectionService.electLeader();
-            if(leaderElectionService.isLeader()) {
-                try {
-                    log.info("Leader, updating distributed cache");
-                    distributedCache.put(uniqueId, new SampleResponseListWrapper(sampleResponseList));
-                }
-                finally {
-                    leaderElectionService.cleanUp();
-                }
-            }
-            else {
-                log.info("Not leader, skipping cache update");
-            }
+        leaderElectionService.electLeader();
+        if(leaderElectionService.isLeader()) {
+            log.info("I'm Leader, updating distributed cache");
+            distributedCache.put(uniqueId, new SampleResponseListWrapper(sampleResponseList));
         }
-        finally {
-            leaderElectionService.cleanUp();
+        else {
+            log.info("Not leader, skipping cache update");
+        }
+        return sampleResponseList;
+    }
+
+    public Optional<List<SampleResponse>> getSampleResponseFromCache() {
+        return inMemoryCache.get(SystemIdentifierUtil.getSystemUniqueKey());
+    }
+
+    public List<SampleResponse> getSampleResponseWithoutLeaderElection() {
+        List<SampleResponse> sampleResponseList = restTemplate.getForObject("https://api.restful-api.dev/objects", List.class);
+        log.info("sampleResponseList size: {}", sampleResponseList.size());
+        String uniqueId = SystemIdentifierUtil.getSystemUniqueKey();
+        synchronized (this) {
+            log.info("Updating caches");
+            inMemoryCache.put(uniqueId, sampleResponseList);
+            distributedCache.put(uniqueId, new SampleResponseListWrapper(sampleResponseList));
         }
         return sampleResponseList;
     }

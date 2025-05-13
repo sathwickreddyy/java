@@ -2,7 +2,6 @@ package com.java.lld.oops.hierarchical.cache.refresh.system.controller;
 
 import com.java.lld.oops.hierarchical.cache.refresh.system.model.SampleResponse;
 import com.java.lld.oops.hierarchical.cache.refresh.system.service.SampleResponseService;
-import com.java.oops.cache.types.AbstractCache;
 import com.java.oops.cache.types.InMemoryCache;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +10,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -55,5 +53,17 @@ public class ApiController {
             log.info("Key {} & Value {}",key, cache.get(key));
         });
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/testDistributedCache")
+    public ResponseEntity<List<SampleResponse>> test2() {
+//        Optional<List<SampleResponse>> sampleResponseList = sampleResponseService.getSampleResponseFromCache();
+//        return sampleResponseList.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(sampleResponseService.getSampleResponse()));
+        return ResponseEntity.ok(sampleResponseService.getSampleResponse());
+    }
+
+    @GetMapping("/testDistributedCacheWithoutLeaderElection")
+    public ResponseEntity<List<SampleResponse>> test3() {
+        return ResponseEntity.ok(sampleResponseService.getSampleResponseWithoutLeaderElection());
     }
 }
