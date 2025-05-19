@@ -1,10 +1,10 @@
 package com.java.lld.oops.hierarchical.cache.refresh.system.configuration;
 
-import com.java.lld.oops.hierarchical.cache.refresh.system.model.SampleResponse;
-import com.java.lld.oops.hierarchical.cache.refresh.system.model.SampleResponseListWrapper;
+import com.java.lld.oops.hierarchical.cache.refresh.system.endpoint.SampleResponse;
+import com.java.lld.oops.hierarchical.cache.refresh.system.endpoint.SampleResponseListWrapper;
 import com.java.oops.cache.eviction.LFUEvictionPolicy;
 import com.java.oops.cache.types.InMemoryCache;
-import com.java.oops.cache.types.RedisDistributedCache;
+import com.java.oops.cache.types.distributed.RedisDistributedCache;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -1,4 +1,4 @@
-package com.java.lld.oops.hierarchical.cache.refresh.system.model;
+package com.java.lld.oops.hierarchical.cache.refresh.system.endpoint;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -8,7 +8,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
 import java.util.Map;
 
 @Data
