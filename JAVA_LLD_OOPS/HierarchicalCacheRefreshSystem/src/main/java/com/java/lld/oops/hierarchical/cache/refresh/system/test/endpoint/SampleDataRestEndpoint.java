@@ -16,7 +16,7 @@ public class SampleDataRestEndpoint {
     private final RestTemplate restTemplate;
     private final static String ENDPOINT = "https://api.restful-api.dev/objects";
 
-    public List<SampleResponse> getSampleData() {
+    public SampleResponseListWrapper getSampleData() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
@@ -29,6 +29,6 @@ public class SampleDataRestEndpoint {
                 new ParameterizedTypeReference<List<SampleResponse>>() {}
         );
         log.info("Fetched data from {}", ENDPOINT);
-        return response.getBody();
+        return new SampleResponseListWrapper(response.getBody());
     }
 }
