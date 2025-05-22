@@ -5,6 +5,7 @@ import com.java.lld.oops.hierarchical.cache.refresh.system.service.LeaderElectio
 import com.java.lld.oops.hierarchical.cache.refresh.system.test.endpoint.SampleResponse;
 import com.java.lld.oops.hierarchical.cache.refresh.system.test.endpoint.SampleResponseListWrapper;
 import com.java.oops.cache.eviction.LFUEvictionPolicy;
+import com.java.oops.cache.eviction.LRUEvictionPolicy;
 import com.java.oops.cache.types.InMemoryCache;
 import com.java.oops.cache.types.distributed.AbstractDistributedCache;
 import com.java.oops.cache.types.distributed.RedisDistributedCache;
@@ -44,11 +45,11 @@ public class SampleConfiguration {
 
     @Bean
     public LeaderElectionService leaderElectionService() {
-        return LeaderElectionService.builder()
-                .leaderKey("leader")
-                .lockTTL(Duration.ofMinutes(2))
-                .distributedCache(new RedisDistributedCache<>(jedisClient()))
-                .build();
+        return new LeaderElectionService(
+                "leader",
+                Duration.ofMinutes(2),
+                new RedisDistributedCache<>(jedisClient())
+        );
     }
 
     @Bean
@@ -58,9 +59,7 @@ public class SampleConfiguration {
 
     @Bean
     public AbstractTTLCache<String, SampleResponseListWrapper> localCache() {
-        return new InMemoryTTLCache<>(new LFUEvictionPolicy<>(), 1000);
+        return new InMemoryTTLCache<>(new LRUEvictionPolicy<>(50000), 50000);
     }
 
-    @Bean
-    public InMemoryCache<String, List<SampleResponse>> cache() { return new InMemoryCache<>(new LFUEvictionPolicy<>(), 1000); }
 }

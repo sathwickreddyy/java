@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.Map;
 
 @Data
@@ -15,7 +16,7 @@ import java.util.Map;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SampleResponse {
+public class SampleResponse implements Serializable {
     @JsonProperty("id")
     private String id;
     @JsonProperty("name")

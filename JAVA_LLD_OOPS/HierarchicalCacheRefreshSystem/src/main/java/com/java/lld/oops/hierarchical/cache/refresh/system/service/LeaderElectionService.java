@@ -2,22 +2,20 @@ package com.java.lld.oops.hierarchical.cache.refresh.system.service;
 
 import com.java.lld.oops.hierarchical.cache.refresh.system.utils.SystemIdentifierUtil;
 import com.java.oops.cache.types.distributed.AbstractDistributedCache;
-import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
 import java.util.Optional;
 
 @Slf4j
-@Builder
 public class LeaderElectionService {
-    private final String leaderKey;
+    private final String lockKey;
     private final Duration lockTTL;
     private final AbstractDistributedCache<String, String> distributedCache;
     private static final String UNIQUE_KEY = SystemIdentifierUtil.getSystemUniqueKey();
 
     public LeaderElectionService(String leaderKey, Duration lockTTL, AbstractDistributedCache<String, String> distributedCache) {
-        this.leaderKey = leaderKey;
+        this.lockKey = distributedCache.getLockKey(leaderKey);
         this.lockTTL = lockTTL;
         this.distributedCache = distributedCache;
     }
@@ -25,7 +23,11 @@ public class LeaderElectionService {
 
     public Optional<String> getCurrentLeader() {
         log.info("Fetching current leader");
-        return distributedCache.get(leaderKey);
+        try {
+            return Optional.ofNullable(distributedCache.fetchLockValue(lockKey));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public boolean isLeader() {
@@ -44,7 +46,7 @@ public class LeaderElectionService {
             return;
         }
         log.info("Attempting to become leader");
-        distributedCache.acquireLock(leaderKey, UNIQUE_KEY, lockTTL);
+        distributedCache.acquireLock(lockKey, UNIQUE_KEY, lockTTL);
         log.info("{} Became leader!", UNIQUE_KEY);
     }
 
@@ -55,6 +57,6 @@ public class LeaderElectionService {
     }
 
     public void cleanUp() throws Exception {
-        distributedCache.releaseLock(leaderKey);
+        distributedCache.releaseLock(lockKey);
     }
 }
