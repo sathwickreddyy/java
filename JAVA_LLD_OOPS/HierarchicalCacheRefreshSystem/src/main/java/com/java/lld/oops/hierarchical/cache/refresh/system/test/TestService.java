@@ -1,7 +1,7 @@
 //package com.java.lld.oops.hierarchical.cache.refresh.system.service;
 //
-//import com.java.lld.oops.hierarchical.cache.refresh.system.endpoint.SampleResponse;
-//import com.java.lld.oops.hierarchical.cache.refresh.system.endpoint.SampleResponseListWrapper;
+//import com.java.lld.oops.hierarchical.cache.refresh.system.test.endpoint.SampleResponse;
+//import com.java.lld.oops.hierarchical.cache.refresh.system.test.endpoint.SampleResponseListWrapper;
 //import com.java.lld.oops.hierarchical.cache.refresh.system.utils.SystemIdentifierUtil;
 //import com.java.oops.cache.types.InMemoryCache;
 //import com.java.oops.cache.types.distributed.RedisDistributedCache;

@@ -1,6 +1,6 @@
 //package com.java.lld.oops.hierarchical.cache.refresh.system.controller;
 //
-//import com.java.lld.oops.hierarchical.cache.refresh.system.endpoint.SampleResponse;
+//import com.java.lld.oops.hierarchical.cache.refresh.system.test.endpoint.SampleResponse;
 //import com.java.lld.oops.hierarchical.cache.refresh.system.service.TestService;
 //import com.java.oops.cache.types.InMemoryCache;
 //import lombok.extern.slf4j.Slf4j;

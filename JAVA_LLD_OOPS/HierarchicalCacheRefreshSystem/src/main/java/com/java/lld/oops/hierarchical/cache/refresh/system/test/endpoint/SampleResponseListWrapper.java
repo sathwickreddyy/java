@@ -1,4 +1,4 @@
-package com.java.lld.oops.hierarchical.cache.refresh.system.endpoint;
+package com.java.lld.oops.hierarchical.cache.refresh.system.test.endpoint;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
