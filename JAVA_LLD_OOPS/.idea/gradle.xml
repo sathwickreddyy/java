@@ -12,6 +12,14 @@
         </option>
       </GradleProjectSettings>
       <GradleProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$/ConfigDrivenDataLoading" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/ConfigDrivenDataLoading" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+      <GradleProjectSettings>
         <option name="externalProjectPath" value="$PROJECT_DIR$/ElevatorControlSystem" />
         <option name="modules">
           <set>
