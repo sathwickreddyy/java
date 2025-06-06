@@ -1,4 +1,4 @@
-package com.java.lld.oops.hierarchical.cache.refresh.system.model;
+package com.java.lld.oops.hierarchical.cache.refresh.system.test.endpoint;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -16,7 +16,7 @@ import java.util.Map;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SampleResponse {
+public class SampleResponse implements Serializable {
     @JsonProperty("id")
     private String id;
     @JsonProperty("name")
