@@ -1,0 +1,24 @@
+load-abc-data:
+  data-sources:
+    market_data_csv:
+      identifier: "MarketDataLoading"
+      type: "CSV"
+      source:
+        filePath: "src/main/resources/data/market/daily_rates.csv"  # Changed from file_path
+        delimiter: ","
+        header: true
+        encoding: "UTF-8"
+      target:
+        schema: "public"
+        table: "market_trends"
+        batchSize: 500  # Changed from batch_size
+      columnMapping: # Changed from column_mapping
+        - source: "date"
+          target: "trade_date"
+        - source: "currency_pair"
+          target: "currency"
+        - source: "rate"
+          target: "exchange_rate"
+        - source: "volume"
+          target: "trading_volume"
+
