@@ -23,9 +23,6 @@ import java.util.List;
 public class ConfigDrivenDataLoadingApplication implements CommandLineRunner {
 
     @Autowired
-    DataLoaderConfiguration config;
-
-    @Autowired
     DataOrchestrator dataOrchestrator;
 
     @Override
