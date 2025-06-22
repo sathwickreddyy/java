@@ -10,7 +10,6 @@ import java.util.*;
  */
 @Slf4j
 public class DataRecordPrinter {
-
     /**
      * Prints a list of {@link DataRecord} in a tabular format.
      *
