@@ -44,8 +44,6 @@ public class DataProcessor {
      * @return A processed and validated stream of {@link DataRecord}
      */
     public Stream<DataRecord> processData(Stream<DataRecord> dataStream, DataLoaderConfiguration.DataSourceDefinition config) {
-        log.info("Starting data processing for source: {}", config.identifier().strip());
-
         return dataStream
                 .filter(DataRecord::valid)
                 .map(record -> applyColumnMapping(record, config.columnMapping()))

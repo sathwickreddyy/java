@@ -23,9 +23,6 @@ public record DataLoaderConfiguration(
 ) {
 
     public record DataSourceDefinition(
-            @NotBlank(message = "Identifier cannot be blank")
-            String identifier,
-
             @NotBlank(message = "Type cannot be blank")
             @Pattern(regexp = "^(CSV|EXCEL|JSON|API|DATABASE)$",
                     message = "Invalid input feed type. Must be one of: CSV, EXCEL, JSON, API, DATABASE")
@@ -70,16 +67,20 @@ public record DataLoaderConfiguration(
             String table,
             @Min(value = 1, message = "Batch size must be at least 1")
             @Max(value = 10000, message = "Batch size cannot exceed 10000")
-            Integer batchSize
+            Integer batchSize,
+            Boolean isBiTemporal
     ) {}
 
     public record ColumnMapping(
+            @NotNull(message = "Data type cannot be null")
             @NotBlank(message = "Source column cannot be blank")
             String source,
 
+            @NotNull(message = "Data type cannot be null")
             @NotBlank(message = "Target column cannot be blank")
             String target,
 
+            @NotBlank(message = "Data type cannot be blank")
             @Pattern(regexp = "^(STRING|INTEGER|LONG|DOUBLE|BIGDECIMAL|BOOLEAN|LOCALDATE|LOCALDATETIME|TIMESTAMP)$",
                     message = "Invalid data type. Must be one of: STRING, INTEGER, LONG, DOUBLE, BIGDECIMAL, BOOLEAN, LOCALDATE, LOCALDATETIME, TIMESTAMP")
             String dataType,

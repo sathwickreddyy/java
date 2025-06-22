@@ -10,9 +10,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -84,6 +86,7 @@ public class DatabaseWriter {
         long duration = System.currentTimeMillis() - startTime;
         double recordsPerSecond = totalRecords > 0 ? (totalRecords * 1000.0) / duration : 0;
 
+        // @TODO arguable to move this to a separate service / remove from here
         try {
             recordAuditTrail(config, totalRecords, duration);
         } catch (Exception e) {
@@ -94,6 +97,34 @@ public class DatabaseWriter {
                 config.target().table(), totalRecords, batchCount, duration);
 
         return new LoadingStats(0, 0, duration, batchCount, recordsPerSecond);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public LoadingStats writeDataWithBiTemporality(
+            Stream<DataRecord> dataStream,
+            DataLoaderConfiguration.DataSourceDefinition config,
+            LocalDate reportingDate) {
+
+        log.info("Starting bitemporal write for table: {}, reportingDate: {}", config.target().table(), reportingDate);
+
+        String tableName = config.target().table();
+        String updateSql = String.format(
+                "UPDATE %s SET validTo = CURRENT_TIMESTAMP WHERE reportingDate = ?", tableName);
+
+        // Step 1: Invalidate existing records for the same reportingDate
+        jdbcTemplate.update(updateSql, reportingDate);
+
+        // Step 2: Enrich incoming records with validFrom, validTo, reportingDate
+        Stream<DataRecord> enrichedStream = dataStream.map(record -> {
+            Map<String, Object> data = new LinkedHashMap<>(record.data());
+            data.put("validFrom", Timestamp.valueOf(LocalDateTime.now()));
+            data.put("validTo", Timestamp.valueOf("9999-12-31 00:00:00"));
+            data.put("reportingDate", Date.valueOf(reportingDate));
+            return new DataRecord(data, record.rowNumber(), record.valid(), record.errorMessage());
+        });
+
+        // Step 3: Delegate to existing write logic
+        return writeData(enrichedStream, config);
     }
 
     /**
@@ -122,7 +153,7 @@ public class DatabaseWriter {
                 for (String column : columns) {
                     Object value = record.data().get(column);
                     ps.setObject(index++, value);
-                    log.debug("Setting value for column '{}': {}", column, value);
+                    log.debug("Setting value for column '{}': {}, {}", column, value, value.getClass());
                 }
             }
 

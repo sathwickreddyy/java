@@ -12,6 +12,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j
@@ -29,20 +30,30 @@ public class ConfigDrivenDataLoadingApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        log.info("DataLoaderConfiguration initialized");
-        log.info("{}", config);
+        log.info("DataLoaderConfiguration initialized:");
+//        log.info("{}", config);
 
-        List<ExecutionResult> results = dataOrchestrator.executeAllDataSources();
+        try {
+            ExecutionResult result1 = dataOrchestrator.executeDataSourcing("market_data_csv");
+            ExecutionResult result2 = dataOrchestrator.executeDataSourcingWithBiTemporality(
+                    "market_data_csv_bitemporal", LocalDate.now().toString());
 
-        // Print results
-        log.info("Execution results:");
-        results.forEach(result -> {
-            log.info("Data source: {}, Records processed: {}, Records per second: {}, Errors: {}",
-                    result.dataSourceName(),
-                    result.processedRecords(),
-                    null,
-                    result.errors());
-        });
+            List<ExecutionResult> results = List.of(result1, result2);
+
+            // Print results
+            log.info("Execution results:");
+            results.forEach(result -> {
+                log.info("Data source: {}, Records processed: {}, Records per second: {}, Errors: {}",
+                        result.dataSourceName(),
+                        result.processedRecords(),
+                        result.stats() != null ? result.stats().recordsPerSecond() : "N/A",
+                        result.errors());
+            });
+
+        } catch (Exception e) {
+            log.error("Unexpected error during data loading execution: {}", e.getMessage(), e);
+            throw e; // Rethrow if you want the application to fail fast
+        }
     }
 
     public static void main(String[] args) {

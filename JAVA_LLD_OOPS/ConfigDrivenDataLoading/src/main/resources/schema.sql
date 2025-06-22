@@ -1,12 +1,23 @@
 -- Market Trends Table
 CREATE TABLE IF NOT EXISTS market_trends (
-                                             id BIGSERIAL PRIMARY KEY,
-                                             trade_date DATE,
-                                             currency VARCHAR(10),
+     id BIGSERIAL PRIMARY KEY,
+     trade_date DATE,
+     currency VARCHAR(10),
     exchange_rate DECIMAL(10,4),
     trading_volume BIGINT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+
+-- // No Primary Key - Bitemporal
+CREATE TABLE IF NOT EXISTS market_trends_bi_temporal (
+    trade_date DATE,
+    currency VARCHAR(10),
+    exchange_rate DECIMAL(10,4),
+    trading_volume BIGINT,
+    validFrom TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    validTo TIMESTAMP NOT NULL DEFAULT '9999-12-31 00:00:00',
+    reportingDate DATE NOT NULL
+);
 
 -- Risk Metrics Table
 CREATE TABLE IF NOT EXISTS risk_metrics (
@@ -52,6 +63,7 @@ CREATE TABLE IF NOT EXISTS data_loading_audit (
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_market_trends_date ON market_trends(trade_date);
+CREATE INDEX IF NOT EXISTS idx_market_trends_bitemporal_reporting_date ON market_trends_bi_temporal(reportingDate);
 CREATE INDEX IF NOT EXISTS idx_risk_metrics_portfolio ON risk_metrics(portfolio_id);
 CREATE INDEX IF NOT EXISTS idx_forecast_data_date ON api_data(forecast_date);
 CREATE INDEX IF NOT EXISTS idx_portfolio_config_id ON portfolio_config(portfolio_id);

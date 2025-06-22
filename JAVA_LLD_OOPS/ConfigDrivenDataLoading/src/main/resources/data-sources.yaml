@@ -1,7 +1,6 @@
 data-sources:
   data-sources:
     market_data_csv:
-      identifier: "MarketDataLoading"
       type: "CSV"
       source:
         filePath: "src/main/resources/sample-data/market_data.csv"
@@ -20,7 +19,31 @@ data-sources:
           target: "currency"
         - source: "rate"
           target: "exchange_rate"
+          data-type: "DOUBLE"
         - source: "volume"
           target: "trading_volume"
           data-type: "BIGDECIMAL"
-          required: no
+    market_data_csv_bitemporal:
+      type: "CSV"
+      source:
+        filePath: "src/main/resources/sample-data/market_data.csv"
+        delimiter: ","
+        header: true
+        encoding: "UTF-8"
+      target:
+        table: "public.market_trends_bi_temporal"
+        isBiTemporal: true
+      columnMapping:
+        - source: "date"
+          target: "trade_date"
+          data-type: "LOCALDATE"
+          target-date-format: "dd-MM-yyyy"
+          required: true
+        - source: "currency_pair"
+          target: "currency"
+        - source: "rate"
+          target: "exchange_rate"
+          data-type: "DOUBLE"
+        - source: "volume"
+          target: "trading_volume"
+          data-type: "BIGDECIMAL"
