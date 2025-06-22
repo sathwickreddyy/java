@@ -30,6 +30,9 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // apache commons CSV
+    implementation 'org.apache.commons:commons-csv:1.10.0'
 }
 
 tasks.named('test') {

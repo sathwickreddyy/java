@@ -1,4 +1,4 @@
-load-abc-data:
+data-sources:
   data-sources:
     market_data_csv:
       identifier: "MarketDataLoading"
@@ -11,7 +11,6 @@ load-abc-data:
       target:
         schema: "public"
         table: "market_trends"
-        batchSize: 500  # Changed from batch_size
       columnMapping: # Changed from column_mapping
         - source: "date"
           target: "trade_date"
