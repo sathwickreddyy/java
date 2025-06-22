@@ -14,10 +14,15 @@ data-sources:
       columnMapping:
         - source: "date"
           target: "trade_date"
+          data-type: "LOCALDATE"
+          target-date-format: "dd-MM-yyyy"
+          required: true
         - source: "currency_pair"
           target: "currency"
         - source: "rate"
           target: "exchange_rate"
         - source: "volume"
           target: "trading_volume"
+          data-type: "BIGDECIMAL"
+          required: no
 

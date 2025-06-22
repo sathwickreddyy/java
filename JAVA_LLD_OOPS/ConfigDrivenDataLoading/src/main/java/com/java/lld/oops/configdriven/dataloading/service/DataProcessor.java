@@ -1,7 +1,9 @@
 package com.java.lld.oops.configdriven.dataloading.service;
 
 import com.java.lld.oops.configdriven.dataloading.config.DataLoaderConfiguration;
+import com.java.lld.oops.configdriven.dataloading.loader.DataTypeConverter;
 import com.java.lld.oops.configdriven.dataloading.model.DataRecord;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -12,19 +14,28 @@ import java.util.stream.Stream;
 
 /**
  * Service responsible for processing data records from data sources.
- * It applies transformations like column mapping from source to destination and validation based on config.
+ * It applies transformations like column mapping (with type conversion) and validation based on config.
+ * Enhancements include:
+ * <ul>
+ *     <li>Column value conversion using {@link DataTypeConverter}</li>
+ *     <li>Graceful fallback using default values when source is null</li>
+ *     <li>Detailed logging and error tracking</li>
+ * </ul>
  *
  * @author sathwick
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class DataProcessor {
+
+    private final DataTypeConverter dataTypeConverter;
 
     /**
      * Processes the incoming data stream by:
      * <ul>
      *     <li>Filtering valid records</li>
-     *     <li>Applying column mapping</li>
+     *     <li>Applying column mapping with type conversion</li>
      *     <li>Validating required fields</li>
      * </ul>
      *
@@ -42,11 +53,11 @@ public class DataProcessor {
     }
 
     /**
-     * Applies column mapping to transform record fields according to the configuration.
+     * Applies column mapping with optional type conversion based on configuration.
      *
      * @param record   The original data record
      * @param mappings List of column mappings from source to target
-     * @return A new {@link DataRecord} with mapped fields
+     * @return A new {@link DataRecord} with mapped and type-converted fields, or marked invalid if conversion fails
      */
     private DataRecord applyColumnMapping(DataRecord record, List<DataLoaderConfiguration.ColumnMapping> mappings) {
         if (mappings == null || mappings.isEmpty()) {
@@ -57,17 +68,33 @@ public class DataProcessor {
         Map<String, Object> mappedData = new HashMap<>();
 
         for (DataLoaderConfiguration.ColumnMapping mapping : mappings) {
+            String sourceKey = mapping.source().strip();
+            String targetKey = mapping.target().strip();
+            Object sourceValue = record.data().get(sourceKey);
+
             try {
-                String sourceKey = mapping.source().strip();
-                String targetKey = mapping.target().strip();
-                Object value = record.data().get(sourceKey);
-                if (value != null) {
-                    mappedData.put(targetKey, value);
+                Object convertedValue;
+
+                if (sourceValue != null) {
+                    convertedValue = dataTypeConverter.convertForDatabase(sourceValue.toString(), mapping);
+                    log.debug("Row {}: Mapped '{}' → '{}' (converted: {} → {}, type: {})",
+                            record.rowNumber(), sourceKey, targetKey,
+                            sourceValue, convertedValue, mapping.dataType());
                 } else {
-                    log.debug("Source key '{}' not present in row {} during mapping", sourceKey, record.rowNumber());
+                    log.debug("Row {}: Source key '{}' missing or null, attempting default for '{}'",
+                            record.rowNumber(), sourceKey, targetKey);
+                    convertedValue = dataTypeConverter.convertForDatabase(null, mapping);
                 }
+                if (convertedValue != null) {
+                    mappedData.put(targetKey, convertedValue);
+                }
+            } catch (DataTypeConverter.DataConversionException e) {
+                String errorMsg = String.format("Data conversion error for column '%s': %s", sourceKey, e.getMessage());
+                log.warn("Row {} marked invalid - {}", record.rowNumber(), errorMsg, e);
+                return DataRecord.invalid(record.data(), record.rowNumber(), errorMsg);
             } catch (Exception e) {
-                log.warn("Error mapping column in row {}: {}", record.rowNumber(), e.getMessage(), e);
+                log.error("Unexpected error in mapping for row {}: {}", record.rowNumber(), e.getMessage(), e);
+                return DataRecord.invalid(record.data(), record.rowNumber(), "Unexpected mapping error");
             }
         }
 
@@ -75,7 +102,7 @@ public class DataProcessor {
     }
 
     /**
-     * Validates the data record by checking for required fields.
+     * Validates the data record by checking for required fields based on the provided configuration.
      *
      * @param record The record to validate
      * @param config The data source configuration

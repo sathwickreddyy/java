@@ -91,6 +91,6 @@ public class DataRecordPrinter {
         for (int width : widths.values()) {
             sb.append("-".repeat(width)).append("  ");
         }
-        System.out.println(sb.toString());
+        System.out.println(sb);
     }
 }
