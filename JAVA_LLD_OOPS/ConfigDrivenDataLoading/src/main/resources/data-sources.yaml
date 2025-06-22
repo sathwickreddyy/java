@@ -9,8 +9,7 @@ data-sources:
         header: true
         encoding: "UTF-8"
       target:
-        schema: "public"
-        table: "market_trends"
+        table: "public.market_trends"
       columnMapping:
         - source: "date"
           target: "trade_date"

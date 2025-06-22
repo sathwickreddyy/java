@@ -67,12 +67,7 @@ public record DataLoaderConfiguration(
     ) {}
 
     public record TargetConfig(
-            @NotBlank(message = "Schema cannot be blank")
-            String schema,
-
-            @NotBlank(message = "Table cannot be blank")
             String table,
-
             @Min(value = 1, message = "Batch size must be at least 1")
             @Max(value = 10000, message = "Batch size cannot exceed 10000")
             Integer batchSize
