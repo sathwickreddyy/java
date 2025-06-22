@@ -70,11 +70,11 @@ data_sources:
       required_columns: ["Portfolio ID", "VaR 95%"]
       data_quality_checks: true
       
-  # Forecast API Data
-  forecast_api:
+  # Rest API Data
+  rest_api_data:
     type: "rest_api"
     source:
-      url: "https://api.forecastprovider.com/v1/liquidity"
+      url: "https://api.provider.com/v1/liquidity"
       method: "GET"
       headers:
         Authorization: "Bearer ${API_TOKEN}"
@@ -86,7 +86,7 @@ data_sources:
       table: "forecast_data"
       batch_size: 1000
     column_mapping:
-      - source: "forecastId" → target: "forecast_id"
+      - source: "id" → target: "forecast_id"
       - source: "assetClass" → target: "asset_class"
       - source: "predictedLiquidity" → target: "predicted_liquidity"
       - source: "confidenceLevel" → target: "confidence_level"
