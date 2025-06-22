@@ -25,4 +25,3 @@ data-sources:
           target: "trading_volume"
           data-type: "BIGDECIMAL"
           required: no
-

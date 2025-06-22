@@ -33,6 +33,10 @@ dependencies {
 
     // apache commons CSV
     implementation 'org.apache.commons:commons-csv:1.10.0'
+
+    // postgres
+    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+    runtimeOnly 'org.postgresql:postgresql'
 }
 
 tasks.named('test') {
