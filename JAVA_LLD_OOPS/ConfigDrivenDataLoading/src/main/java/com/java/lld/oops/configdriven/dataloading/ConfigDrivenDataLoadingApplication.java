@@ -31,7 +31,6 @@ public class ConfigDrivenDataLoadingApplication implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         log.info("DataLoaderConfiguration initialized:");
-//        log.info("{}", config);
 
         try {
             ExecutionResult result1 = dataOrchestrator.executeDataSourcing("market_data_csv");
