@@ -109,7 +109,7 @@ public class DatabaseWriter {
 
         String tableName = config.target().table();
         String updateSql = String.format(
-                "UPDATE %s SET validTo = CURRENT_TIMESTAMP WHERE reportingDate = ?", tableName);
+                "UPDATE %s SET valid_to = CURRENT_TIMESTAMP WHERE reporting_date = ?", tableName);
 
         // Step 1: Invalidate existing records for the same reportingDate
         jdbcTemplate.update(updateSql, reportingDate);
@@ -117,9 +117,9 @@ public class DatabaseWriter {
         // Step 2: Enrich incoming records with validFrom, validTo, reportingDate
         Stream<DataRecord> enrichedStream = dataStream.map(record -> {
             Map<String, Object> data = new LinkedHashMap<>(record.data());
-            data.put("validFrom", Timestamp.valueOf(LocalDateTime.now()));
-            data.put("validTo", Timestamp.valueOf("9999-12-31 00:00:00"));
-            data.put("reportingDate", Date.valueOf(reportingDate));
+            data.put("valid_from", Timestamp.valueOf(LocalDateTime.now()));
+            data.put("valid_to", Timestamp.valueOf("9999-12-31 00:00:00"));
+            data.put("reporting_date", Date.valueOf(reportingDate));
             return new DataRecord(data, record.rowNumber(), record.valid(), record.errorMessage());
         });
 

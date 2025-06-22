@@ -1,4 +1,4 @@
-data-sources:
+data-sourcing:
   data-sources:
     market_data_csv:
       type: "CSV"
@@ -13,7 +13,6 @@ data-sources:
         - source: "date"
           target: "trade_date"
           data-type: "LOCALDATE"
-          dataTypeValidationRequired: "no"
         - source: "currency_pair"
           target: "currency"
         - source: "rate"
@@ -45,3 +44,13 @@ data-sources:
         - source: "volume"
           target: "trading_volume"
           data-type: "BIGDECIMAL"
+
+# All data type conversions are supported - check DataTypeConverter class that is being used by orchestrator
+# test mode - we can remove target option
+# test mode - we can exclude the dataTypeValidationRequired option
+# test mode - Any column commenting is easy and won't be any problem - loads with null for that column in the table easy in terms of testing
+# test mode -All types of delimiters are supported
+# test mode - we can specify target date formats as well - cmd+click on columnMapping to check all options
+# Supports both standard loading and bitemporal loading
+# Any source column changes are easy to make and will not break the code and dont need worry on fixing bugs
+# New file loading is easy

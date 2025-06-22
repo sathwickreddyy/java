@@ -14,7 +14,7 @@ import java.util.Map;
  * @author sathwick
  */
 @Validated
-@ConfigurationProperties(prefix = "data-sources")
+@ConfigurationProperties(prefix = "data-sourcing")
 public record DataLoaderConfiguration(
         @NotNull
         @NotEmpty
