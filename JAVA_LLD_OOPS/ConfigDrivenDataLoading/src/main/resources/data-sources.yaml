@@ -4,14 +4,14 @@ data-sources:
       identifier: "MarketDataLoading"
       type: "CSV"
       source:
-        filePath: "src/main/resources/data/market/daily_rates.csv"  # Changed from file_path
+        filePath: "src/main/resources/sample-data/market_data.csv"
         delimiter: ","
         header: true
         encoding: "UTF-8"
       target:
         schema: "public"
         table: "market_trends"
-      columnMapping: # Changed from column_mapping
+      columnMapping:
         - source: "date"
           target: "trade_date"
         - source: "currency_pair"

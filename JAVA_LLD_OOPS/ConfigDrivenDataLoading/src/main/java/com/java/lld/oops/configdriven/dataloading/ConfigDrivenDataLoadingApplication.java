@@ -1,6 +1,8 @@
 package com.java.lld.oops.configdriven.dataloading;
 
 import com.java.lld.oops.configdriven.dataloading.config.DataLoaderConfiguration;
+import com.java.lld.oops.configdriven.dataloading.model.ExecutionResult;
+import com.java.lld.oops.configdriven.dataloading.service.DataOrchestrator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -8,6 +10,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.scheduling.annotation.EnableAsync;
+
+import java.util.List;
 
 @Slf4j
 @EnableAsync
@@ -18,10 +22,25 @@ public class ConfigDrivenDataLoadingApplication implements CommandLineRunner {
     @Autowired
     DataLoaderConfiguration config;
 
+    @Autowired
+    DataOrchestrator dataOrchestrator;
+
     @Override
     public void run(String... args) throws Exception {
         log.info("DataLoaderConfiguration initialized");
         log.info("{}", config);
+
+        List<ExecutionResult> results = dataOrchestrator.executeAllDataSources();
+
+        // Print results
+        log.info("Execution results:");
+        results.forEach(result -> {
+            log.info("Data source: {}, Records processed: {}, Records per second: {}, Errors: {}",
+                    result.dataSourceName(),
+                    result.processedRecords(),
+                    null,
+                    result.errors());
+        });
     }
 
     public static void main(String[] args) {

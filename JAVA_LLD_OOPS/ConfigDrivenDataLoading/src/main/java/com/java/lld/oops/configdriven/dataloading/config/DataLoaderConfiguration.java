@@ -1,6 +1,5 @@
 package com.java.lld.oops.configdriven.dataloading.config;
 
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -10,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Configuration properties for data loading
+ * Configuration properties for data loading with enhanced type support
  * @param dataSources data-sources from data-sources.yaml
  * @author sathwick
  */
@@ -82,9 +81,36 @@ public record DataLoaderConfiguration(
     public record ColumnMapping(
             @NotBlank(message = "Source column cannot be blank")
             String source,
+
             @NotBlank(message = "Target column cannot be blank")
-            String target
-    ) {}
+            String target,
+
+            @Pattern(regexp = "^(STRING|INTEGER|LONG|DOUBLE|BIGDECIMAL|BOOLEAN|LOCALDATE|LOCALDATETIME|TIMESTAMP)$",
+                    message = "Invalid data type. Must be one of: STRING, INTEGER, LONG, DOUBLE, BIGDECIMAL, BOOLEAN, LOCALDATE, LOCALDATETIME, TIMESTAMP")
+            String dataType,
+
+            // Date/Time formatting options
+            String sourceDateFormat,
+            String targetDateFormat,
+            String timeZone,
+
+            // Numeric formatting options
+            String decimalFormat,
+
+            // Validation options
+            Boolean required,
+            String defaultValue
+    ) {
+        // Default constructor with sensible defaults
+        public ColumnMapping {
+            if (dataType == null) {
+                dataType = "STRING";
+            }
+            if (required == null) {
+                required = false;
+            }
+        }
+    }
 
     public record ValidationConfig(
             List<String> requiredColumns,
