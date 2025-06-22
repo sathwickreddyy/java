@@ -16,6 +16,8 @@ import java.util.*;
 /**
  * Component that handles conversion of string values to typed Java objects
  * according to mapping definitions for use in data ingestion and transformation.
+ *
+ * @author sathwick
  */
 @Slf4j
 @Component

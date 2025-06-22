@@ -16,6 +16,8 @@ import java.util.List;
  * @param endTime          time when the execution ended
  * @param durationMs       duration of the execution in milliseconds
  * @param errors           list of error messages encountered during processing
+ *
+ * @author sathwick
  */
 public record ExecutionResult(String dataSourceName,
                               boolean success,
