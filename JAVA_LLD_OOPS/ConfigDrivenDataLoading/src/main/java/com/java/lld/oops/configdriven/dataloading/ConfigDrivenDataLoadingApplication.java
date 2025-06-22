@@ -35,8 +35,9 @@ public class ConfigDrivenDataLoadingApplication implements CommandLineRunner {
 
         try {
             ExecutionResult result1 = dataOrchestrator.executeDataSourcing("market_data_csv");
+            String reportingDate = LocalDate.now().toString();
             ExecutionResult result2 = dataOrchestrator.executeDataSourcingWithBiTemporality(
-                    "market_data_csv_bitemporal", LocalDate.now().toString());
+                    "market_data_csv_bitemporal", reportingDate);
 
             List<ExecutionResult> results = List.of(result1, result2);
 
