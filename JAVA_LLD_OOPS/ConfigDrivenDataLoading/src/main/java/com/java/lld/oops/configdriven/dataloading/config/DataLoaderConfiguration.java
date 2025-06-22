@@ -32,7 +32,6 @@ public record DataLoaderConfiguration(
             @Valid
             SourceConfig source,
 
-            @NotNull(message = "Target configuration cannot be null")
             @Valid
             TargetConfig target,
 
@@ -93,8 +92,9 @@ public record DataLoaderConfiguration(
             // Numeric formatting options
             String decimalFormat,
 
-            // Validation options
-            Boolean required,
+            // Validation options / Data type conversion required or not
+            @Pattern(regexp = "^(yes|no|1|0|y|n|YES|NO|Y|N|Yes|No)$", message = "Invalid Input must be one of: yes/no/1/0/y/n/YES/NO/Y/N/Yes/No")
+            String dataTypeValidationRequired,
             String defaultValue
     ) {
         // Default constructor with sensible defaults
@@ -102,8 +102,8 @@ public record DataLoaderConfiguration(
             if (dataType == null) {
                 dataType = "STRING";
             }
-            if (required == null) {
-                required = false;
+            if (dataTypeValidationRequired == null) {
+                dataTypeValidationRequired = "yes";
             }
         }
     }

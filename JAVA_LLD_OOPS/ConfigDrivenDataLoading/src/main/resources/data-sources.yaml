@@ -7,14 +7,13 @@ data-sources:
         delimiter: ","
         header: true
         encoding: "UTF-8"
-      target:
-        table: "public.market_trends"
+#      target:
+#        table: "public.market_trends"
       columnMapping:
         - source: "date"
           target: "trade_date"
           data-type: "LOCALDATE"
-          target-date-format: "dd-MM-yyyy"
-          required: true
+          dataTypeValidationRequired: "no"
         - source: "currency_pair"
           target: "currency"
         - source: "rate"
@@ -30,15 +29,14 @@ data-sources:
         delimiter: ","
         header: true
         encoding: "UTF-8"
-      target:
-        table: "public.market_trends_bi_temporal"
-        isBiTemporal: true
+#      target:
+#        table: "public.market_trends_bi_temporal"
+#        isBiTemporal: true
       columnMapping:
         - source: "date"
           target: "trade_date"
           data-type: "LOCALDATE"
           target-date-format: "dd-MM-yyyy"
-          required: true
         - source: "currency_pair"
           target: "currency"
         - source: "rate"

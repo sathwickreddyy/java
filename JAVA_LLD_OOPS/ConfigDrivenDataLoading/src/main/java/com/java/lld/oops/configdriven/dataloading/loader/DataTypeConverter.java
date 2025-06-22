@@ -41,7 +41,11 @@ public class DataTypeConverter {
         if (value == null || value.isBlank()) {
             return handleNullValue(mapping);
         }
-
+        if ("no".equalsIgnoreCase(mapping.dataTypeValidationRequired()) ||
+            "n".equalsIgnoreCase(mapping.dataTypeValidationRequired()) ||
+            "0".equals(mapping.dataTypeValidationRequired())) {
+            return value.strip();
+        }
         try {
             return switch (mapping.dataType().toUpperCase()) {
                 case "STRING" -> value.strip();
@@ -129,19 +133,12 @@ public class DataTypeConverter {
     }
 
     private Object handleNullValue(ColumnMapping mapping) {
-        if (Boolean.TRUE.equals(mapping.required())) {
-            String msg = "Required column '" + mapping.target() + "' cannot be null";
-            log.error(msg);
-            throw new DataConversionException(msg);
-        }
-
         if (mapping.defaultValue() != null && !mapping.defaultValue().isBlank()) {
             return convertForDatabase(mapping.defaultValue(), new ColumnMapping(
                     mapping.source(), mapping.target(), mapping.dataType(),
                     mapping.sourceDateFormat(), mapping.targetDateFormat(),
-                    mapping.timeZone(), mapping.decimalFormat(), false, null));
+                    mapping.timeZone(), mapping.decimalFormat(), "no", null));
         }
-
         return null;
     }
 
