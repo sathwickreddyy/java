@@ -11,19 +11,19 @@ import java.util.Map;
 
 /**
  * Configuration properties for data loading
- * @param dataSources load-abc-data from data-sources.yaml
+ * @param dataSources data-sources from data-sources.yaml
  * @author sathwick
  */
 @Validated
-@ConfigurationProperties(prefix = "load-abc-data")
+@ConfigurationProperties(prefix = "data-sources")
 public record DataLoaderConfiguration(
         @NotNull
         @NotEmpty
         @Valid
-        Map<String, DataSourceConfiguration> dataSources
+        Map<String, DataSourceDefinition> dataSources
 ) {
 
-    public record DataSourceConfiguration(
+    public record DataSourceDefinition(
             @NotBlank(message = "Identifier cannot be blank")
             String identifier,
 
@@ -43,7 +43,9 @@ public record DataLoaderConfiguration(
             @NotNull(message = "Column mapping cannot be null")
             @NotEmpty(message = "Column mapping cannot be empty")
             @Valid
-            List<ColumnMapping> columnMapping
+            List<ColumnMapping> columnMapping,
+
+            ValidationConfig validation
     ) {}
 
     public record SourceConfig(
@@ -82,5 +84,10 @@ public record DataLoaderConfiguration(
             String source,
             @NotBlank(message = "Target column cannot be blank")
             String target
+    ) {}
+
+    public record ValidationConfig(
+            List<String> requiredColumns,
+            boolean dataQualityChecks
     ) {}
 }
