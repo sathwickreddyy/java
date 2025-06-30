@@ -1,0 +1,150 @@
+@startuml ConfigDrivenDataLoading_DataFlow
+!theme aws-orange
+title Data Loading Process - Complete Flow Sequence
+
+actor "API Client" as Client
+participant "DataLoaderController" as Controller
+participant "DataOrchestrator" as Orchestrator
+participant "DataSourceFactory" as Factory
+participant "DataLoader\n(CSV/Excel/JSON/API)" as Loader
+participant "DataProcessor" as Processor
+participant "DataTypeConverter" as Converter
+participant "DatabaseWriter" as Writer
+participant "JdbcTemplate" as JDBC
+database "Target Database" as DB
+
+Client -> Controller : POST /api/data-loader/execute/{name}
+activate Controller
+
+Controller -> Orchestrator : executeDataSource(name)
+activate Orchestrator
+
+note over Orchestrator
+  **Execution Start**
+  - Load configuration for data source
+  - Initialize error handling
+  - Start performance tracking
+end note
+
+Orchestrator -> Factory : getLoader(config.type)
+activate Factory
+Factory -> Factory : Find appropriate loader\n(CSV, Excel, JSON, API)
+Factory --> Orchestrator : DataLoader instance
+deactivate Factory
+
+Orchestrator -> Loader : loadData(config)
+activate Loader
+
+note over Loader
+  **Data Loading Phase**
+  - Read from source (file/API)
+  - Parse data format
+  - Create DataRecord stream
+  - Handle source-specific errors
+end note
+
+Loader --> Orchestrator : Stream<DataRecord>
+deactivate Loader
+
+Orchestrator -> Processor : processData(dataStream, config)
+activate Processor
+
+loop For each DataRecord in stream
+    Processor -> Processor : applyColumnMapping()
+
+    note over Processor
+      **Column Mapping**
+      - Map source → target columns
+      - Apply data type conversion
+      - Handle missing values
+    end note
+
+    Processor -> Converter : convertForDatabase(value, mapping)
+    activate Converter
+
+    alt Data Type: LOCALDATE
+        Converter -> Converter : parseLocalDate(value, format)
+        Converter -> Converter : Date.valueOf(localDate)
+    else Data Type: LOCALDATETIME
+        Converter -> Converter : parseLocalDateTime(value, format)
+        Converter -> Converter : Timestamp.valueOf(localDateTime)
+    else Data Type: BIGDECIMAL
+        Converter -> Converter : new BigDecimal(value)
+    else Data Type: BOOLEAN
+        Converter -> Converter : parseBoolean(value)
+    else Default: STRING
+        Converter -> Converter : value.trim()
+    end
+
+    Converter --> Processor : Converted value
+    deactivate Converter
+
+    Processor -> Processor : validateRecord(record, config)
+
+    note over Processor
+      **Validation Phase**
+      - Check required columns
+      - Data quality validation
+      - Business rule validation
+    end note
+end
+
+Processor --> Orchestrator : Stream<ProcessedDataRecord>
+deactivate Processor
+
+Orchestrator -> Writer : writeData(processedStream, config)
+activate Writer
+
+Writer -> Writer : Collect records into batches\n(configurable batch size)
+
+loop For each batch
+    Writer -> JDBC : batchUpdate(insertSql, batchSetter)
+    activate JDBC
+
+    note over JDBC
+      **Batch Database Insert**
+      - Prepare SQL statement
+      - Set parameters with explicit types
+      - Execute batch insert
+      - Handle SQL exceptions
+    end note
+
+    JDBC -> DB : INSERT INTO table_name (columns) VALUES (?)
+    activate DB
+    DB --> JDBC : Batch execution result
+    deactivate DB
+
+    JDBC --> Writer : Batch result
+    deactivate JDBC
+end
+
+Writer -> Writer : recordAuditTrail(config, stats)
+Writer -> JDBC : INSERT INTO data_loading_audit
+JDBC -> DB : Audit record insertion
+
+Writer --> Orchestrator : LoadingStats
+deactivate Writer
+
+note over Orchestrator
+  **Execution Complete**
+  - Calculate performance metrics
+  - Generate execution result
+  - Log completion status
+end note
+
+Orchestrator --> Controller : ExecutionResult
+deactivate Orchestrator
+
+Controller --> Client : HTTP 200 OK\nExecutionResult JSON
+deactivate Controller
+
+note over Client
+  **Response Contains:**
+  - Success/failure status
+  - Records processed count
+  - Execution duration
+  - Error details (if any)
+  - Performance statistics
+end note
+
+@enduml

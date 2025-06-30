@@ -1,0 +1,229 @@
+@startuml ConfigDrivenDataLoading_ClassDiagram
+!theme aws-orange
+title Config-Driven Data Loading Framework - Class Relationships
+
+skinparam backgroundColor #FAFAFA
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+package "Configuration Layer" {
+    class DataLoaderConfiguration <<record>> {
+        +Map<String, DataSourceDefinition> dataSources
+        --
+        +record DataSourceDefinition
+        +record SourceConfig
+        +record TargetConfig
+        +record ColumnMapping
+        +record ValidationConfig
+    }
+
+    class ColumnMapping <<record>> {
+        +String source
+        +String target
+        +String dataType
+        +String sourceDateFormat
+        +String targetDateFormat
+        +String timeZone
+        +String decimalFormat
+        +Boolean required
+        +String defaultValue
+    }
+}
+
+package "Controller Layer" {
+    class DataLoaderController {
+        -DataOrchestrator orchestrator
+        -DataLoaderConfiguration config
+        -DataSourceFactory factory
+        --
+        +getSummary(): ResponseEntity<Map>
+        +getDataSources(): ResponseEntity<Map>
+        +executeDataSource(name): ResponseEntity<ExecutionResult>
+        +executeAllDataSources(): ResponseEntity<List<ExecutionResult>>
+        +executeDataSourceAsync(name): ResponseEntity<String>
+    }
+}
+
+package "Service Layer" {
+    class DataOrchestrator {
+        -DataSourceFactory dataSourceFactory
+        -DataProcessor dataProcessor
+        -DatabaseWriter databaseWriter
+        -DataLoaderConfiguration config
+        --
+        +executeDataSource(name): ExecutionResult
+        +executeDataSourceAsync(name): CompletableFuture<ExecutionResult>
+        +executeAllDataSources(): List<ExecutionResult>
+    }
+
+    class DataProcessor {
+        -DataTypeConverter dataTypeConverter
+        --
+        +processData(stream, config): Stream<DataRecord>
+        -applyColumnMappingWithTypes(record, mappings): DataRecord
+        -validateRecord(record, config): DataRecord
+    }
+
+    class DatabaseWriter {
+        -JdbcTemplate jdbcTemplate
+        -DataTypeConverter dataTypeConverter
+        --
+        +writeData(stream, config): LoadingStats
+        -executeBatch(records, config): void
+        -buildInsertSql(table, columns): String
+        -recordAuditTrail(config, count, duration): void
+    }
+}
+
+package "Factory & Loader Layer" {
+    interface DataLoader {
+        +getType(): String
+        +loadData(config): Stream<DataRecord>
+    }
+
+    class DataSourceFactory {
+        -Map<String, DataLoader> loaders
+        --
+        +getLoader(type): DataLoader
+        +getSupportedTypes(): List<String>
+    }
+
+    class CsvDataLoader {
+        --
+        +getType(): String
+        +loadData(config): Stream<DataRecord>
+        -convertToDataRecord(record, rowNumber): DataRecord
+    }
+
+    class ExcelDataLoader {
+        --
+        +getType(): String
+        +loadData(config): Stream<DataRecord>
+        -extractHeaders(headerRow): String[]
+        -convertToDataRecord(row, headers, rowNumber): DataRecord
+        -getCellValue(cell): Object
+    }
+
+    class JsonDataLoader {
+        -ObjectMapper objectMapper
+        --
+        +getType(): String
+        +loadData(config): Stream<DataRecord>
+        -convertToDataRecord(item, rowNumber): DataRecord
+        -getNodeValue(node): Object
+    }
+
+    class RestApiDataLoader {
+        -WebClient webClient
+        -ObjectMapper objectMapper
+        --
+        +getType(): String
+        +loadData(config): Stream<DataRecord>
+        -fetchData(source): String
+        -convertToDataRecord(node, rowNumber): DataRecord
+    }
+}
+
+package "Converter Layer" {
+    class DataTypeConverter {
+        -Map<String, DateTimeFormatter> COMMON_DATE_FORMATTERS
+        -Map<String, DateTimeFormatter> COMMON_DATETIME_FORMATTERS
+        --
+        +convertForDatabase(value, mapping): Object
+        +getSqlType(dataType): int
+        -convertToSqlDate(value, mapping): Date
+        -convertToSqlTimestamp(value, mapping): Timestamp
+        -parseLocalDate(value, format): LocalDate
+        -parseLocalDateTime(value, format): LocalDateTime
+        -parseBoolean(value): Boolean
+        -handleNullValue(mapping): Object
+    }
+
+    class DataConversionException {
+        +DataConversionException(message)
+        +DataConversionException(message, cause)
+    }
+}
+
+package "Model Layer" {
+    class DataRecord <<record>> {
+        +Map<String, Object> data
+        +int rowNumber
+        +boolean valid
+        +String errorMessage
+        --
+        +static valid(data, rowNumber): DataRecord
+        +static invalid(data, rowNumber, error): DataRecord
+    }
+
+    class ExecutionResult <<record>> {
+        +String dataSourceName
+        +boolean success
+        +int totalRecords
+        +int processedRecords
+        +int errorRecords
+        +LocalDateTime startTime
+        +LocalDateTime endTime
+        +long durationMs
+        +List<String> errors
+        +LoadingStats stats
+        --
+        +static success(...): ExecutionResult
+        +static failure(...): ExecutionResult
+    }
+
+    class LoadingStats <<record>> {
+        +long readTimeMs
+        +long processTimeMs
+        +long writeTimeMs
+        +int batchCount
+        +double recordsPerSecond
+    }
+}
+
+' Relationships
+DataLoaderController --> DataOrchestrator : uses
+DataLoaderController --> DataLoaderConfiguration : uses
+DataLoaderController --> DataSourceFactory : uses
+
+DataOrchestrator --> DataSourceFactory : uses
+DataOrchestrator --> DataProcessor : uses
+DataOrchestrator --> DatabaseWriter : uses
+DataOrchestrator --> DataLoaderConfiguration : uses
+
+DataProcessor --> DataTypeConverter : uses
+DatabaseWriter --> DataTypeConverter : uses
+
+DataSourceFactory --> DataLoader : creates
+DataLoader <|.. CsvDataLoader : implements
+DataLoader <|.. ExcelDataLoader : implements
+DataLoader <|.. JsonDataLoader : implements
+DataLoader <|.. RestApiDataLoader : implements
+
+DataTypeConverter --> DataConversionException : throws
+
+DataOrchestrator --> ExecutionResult : creates
+DatabaseWriter --> LoadingStats : creates
+DataLoader --> DataRecord : creates
+
+DataLoaderConfiguration --> ColumnMapping : contains
+
+note top of DataTypeConverter
+  **Key Conversion Features:**
+  • LocalDate → java.sql.Date using Date.valueOf()
+  • LocalDateTime → java.sql.Timestamp using Timestamp.valueOf()
+  • Custom date format parsing with fallback
+  • BigDecimal precision handling
+  • Flexible boolean parsing (true/1/yes/on)
+  • Comprehensive error handling
+end note
+
+note bottom of DataSourceFactory
+  **Factory Pattern Implementation:**
+  • Auto-discovery of DataLoader implementations
+  • Type-safe loader creation
+  • Extensible for new data source types
+  • Spring dependency injection integration
+end note
+
+@enduml

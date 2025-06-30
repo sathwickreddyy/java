@@ -1,0 +1,127 @@
+@startuml ConfigDrivenDataLoadingFramework_Architecture
+!theme aws-orange
+title Config-Driven Data Loading Framework - System Architecture
+
+skinparam backgroundColor #FAFAFA
+skinparam componentStyle rectangle
+skinparam linetype ortho
+
+package "External Data Sources" as DataSources {
+    [CSV Files] as CSV
+    [Excel Files] as Excel
+    [JSON Files] as JSON
+    [REST APIs] as API
+    [Database] as ExtDB
+}
+
+package "Spring Boot Application" as SpringApp {
+
+    package "Controller Layer" as Controllers {
+        [DataLoaderController] as Controller
+    }
+
+    package "Service Layer" as Services {
+        [DataOrchestrator] as Orchestrator
+        [DataProcessor] as Processor
+        [DatabaseWriter] as Writer
+    }
+
+    package "Factory & Loaders" as Factory {
+        [DataSourceFactory] as DSFactory
+        [CsvDataLoader] as CsvLoader
+        [ExcelDataLoader] as ExcelLoader
+        [JsonDataLoader] as JsonLoader
+        [RestApiDataLoader] as ApiLoader
+    }
+
+    package "Configuration" as Config {
+        [DataLoaderConfiguration] as Configuration
+        [DataTypeConverter] as Converter
+    }
+
+    package "Models" as Models {
+        [DataRecord] as Record
+        [ExecutionResult] as Result
+        [LoadingStats] as Stats
+    }
+}
+
+package "Database Layer" as Database {
+    database "Target Database\n(H2/PostgreSQL/MySQL)" as TargetDB {
+        [market_trends] as Table1
+        [risk_metrics] as Table2
+        [forecast_data] as Table3
+        [portfolio_config] as Table4
+        [data_loading_audit] as AuditTable
+    }
+}
+
+package "Configuration Files" as ConfigFiles {
+    [data-sources.yml] as YamlConfig
+    [application.yml] as AppConfig
+}
+
+' External connections
+CSV --> CsvLoader : "Read CSV Data"
+Excel --> ExcelLoader : "Read Excel Data"
+JSON --> JsonLoader : "Read JSON Data"
+API --> ApiLoader : "Fetch API Data"
+
+' Configuration loading
+YamlConfig --> Configuration : "Load Config"
+AppConfig --> SpringApp : "App Settings"
+
+' Controller to Service flow
+Controller --> Orchestrator : "Execute Data Loading"
+
+' Service interactions
+Orchestrator --> DSFactory : "Get Data Loader"
+Orchestrator --> Processor : "Process Data"
+Orchestrator --> Writer : "Write to Database"
+
+' Factory to Loaders
+DSFactory --> CsvLoader
+DSFactory --> ExcelLoader
+DSFactory --> JsonLoader
+DSFactory --> ApiLoader
+
+' Data processing flow
+Processor --> Converter : "Convert Data Types"
+Writer --> TargetDB : "Batch Insert"
+
+' Model usage
+Orchestrator --> Record : "Create/Use"
+Orchestrator --> Result : "Return Results"
+Writer --> Stats : "Generate Stats"
+
+' Configuration usage
+Configuration --> Orchestrator : "Data Source Config"
+Configuration --> Processor : "Column Mappings"
+Configuration --> Writer : "Target Config"
+
+note right of Orchestrator
+  **Core Orchestrator**
+  - Manages entire pipeline
+  - Error handling & retry logic
+  - Async execution support
+  - Comprehensive logging
+end note
+
+note right of Converter
+  **Type Conversion Features**
+  - LocalDate → java.sql.Date
+  - LocalDateTime → java.sql.Timestamp
+  - Custom date formatters
+  - BigDecimal precision handling
+  - Boolean flexible parsing
+end note
+
+note bottom of TargetDB
+  **Database Features**
+  - HikariCP connection pooling
+  - Batch processing optimization
+  - Transaction management
+  - Audit trail recording
+end note
+
+@enduml

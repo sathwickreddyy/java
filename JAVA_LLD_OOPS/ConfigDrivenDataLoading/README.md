@@ -125,6 +125,16 @@ global_settings:
     query_timeout: 300
     memory_limit: "2GB"
 ```
+## **High Level Architecture Diagram**
+
+![Architecture](./src/main/resources/system-arch.png)
+
+## **Sequence Diagram**
+![Sequence](./src/main/resources/system-sequence.png)
+
+## Class Diagram
+![Class](./src/main/resources/system-class.png)
+
 ## **Key Developer Benefits**
 
 - **Code Reusability**: Write once, configure multiple times - no duplicate data loading logic
