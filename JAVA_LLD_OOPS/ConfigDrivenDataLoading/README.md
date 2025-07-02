@@ -22,7 +22,7 @@ Framework that eliminates repetitive data loading code by using configuration fi
 - **DataSourceFactory**: Creates appropriate loaders based on configuration type
 - **DataOrchestrator**: Manages the entire pipeline with error handling and retry logic [One Time Implementation]
 - **DataProcessor**: Handles transformations and column mapping
-- **DatabaseWriter**: Executes batch operations to LiqForecast schema tables
+- **DatabaseWriter**: Executes batch operations to Database schema tables
 
 ## **Sample Configuration Files**
 
@@ -41,7 +41,7 @@ data_sources:
       header: true
       encoding: "UTF-8"
     target:
-      schema: "LiqForecast"
+      schema: "MarketData"
       table: "market_trends"
       batch_size: 500
     column_mapping:
@@ -58,7 +58,7 @@ data_sources:
       sheet_name: "RiskData"
       skip_rows: 1
     target:
-      schema: "LiqForecast"
+      schema: "RiskMetrics"
       table: "risk_metrics"
       batch_size: 200
     column_mapping:
@@ -74,7 +74,7 @@ data_sources:
   rest_api_data:
     type: "rest_api"
     source:
-      url: "https://api.provider.com/v1/liquidity"
+      url: "https://api.provider.com/v1/liq"
       method: "GET"
       headers:
         Authorization: "Bearer ${API_TOKEN}"
@@ -82,11 +82,11 @@ data_sources:
       timeout: 30
       retry_attempts: 3
     target:
-      schema: "LiqForecast"
+      schema: "APIData"
       table: "forecast_data"
       batch_size: 1000
     column_mapping:
-      - source: "id" → target: "forecast_id"
+      - source: "id" → target: "id"
       - source: "assetClass" → target: "asset_class"
       - source: "predictedLiquidity" → target: "predicted_liquidity"
       - source: "confidenceLevel" → target: "confidence_level"
@@ -99,7 +99,7 @@ data_sources:
       file_path: "/config/portfolio_settings.json"
       json_path: "$.portfolios[*]"
     target:
-      schema: "LiqForecast"
+      schema: "ConfigData"
       table: "portfolio_config"
       batch_size: 100
     column_mapping:
