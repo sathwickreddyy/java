@@ -40,7 +40,10 @@ public record DataLoaderConfiguration(
             @Valid
             List<ColumnMapping> columnMapping,
 
-            ValidationConfig validation
+            ValidationConfig  validation,
+
+            // Model-specific configuration
+            ModelConfig model
     ) {}
 
     public record SourceConfig(
@@ -64,6 +67,9 @@ public record DataLoaderConfiguration(
 
     public record TargetConfig(
             String table,
+            @Pattern(regexp = "^(table|model)$",
+                    message = "Target type must be either 'table' or 'model'")
+            String type,
             @Min(value = 1, message = "Batch size must be at least 1")
             @Max(value = 10000, message = "Batch size cannot exceed 10000")
             Integer batchSize,
@@ -104,6 +110,104 @@ public record DataLoaderConfiguration(
             }
             if (dataTypeValidationRequired == null) {
                 dataTypeValidationRequired = "yes";
+            }
+        }
+    }
+
+    /**
+     * Configuration for mapping data source columns to DTO fields.
+     *
+     * <p><b>Mapping Strategies:</b></p>
+     *
+     * <ul>
+     *   <li><b>DIRECT</b>:
+     *     <ul>
+     *       <li>Source column names must exactly match the DTO field names.</li>
+     *       <li>No need to define <code>columnMapping</code> in YAML.</li>
+     *       <li>Simple, fast, and requires minimal configuration.</li>
+     *     </ul>
+     *   </li>
+     *
+     *   <li><b>MAPPED</b>:
+     *     <ul>
+     *       <li>Uses the <code>columnMapping</code> section in YAML to map source columns to DTO fields.</li>
+     *       <li>Allows renaming and transformation of field names.</li>
+     *       <li>Supports complex mapping use cases (e.g., nested fields, different naming conventions).</li>
+     *     </ul>
+     *   </li>
+     * </ul>
+     *
+     * <p><b>YAML Example for MAPPED strategy:</b></p>
+     *
+     * <pre>
+     * mappingStrategy: MAPPED
+     * columnMapping:
+     *   - source: "currency_pair"   # CSV column name
+     *     target: "currency"        # DTO field name
+     *   - source: "trade_date"
+     *     target: "tradeDate"
+     * </pre>
+     *
+     * <p><b>Strict Mapping Behavior:</b></p>
+     *
+     * <ul>
+     *   <li><b>strictMapping: true</b>
+     *     <ul>
+     *       <li>Enforces strict field mapping.</li>
+     *       <li>Throws an exception if any required field is missing or mapping fails.</li>
+     *       <li>Stops processing immediately on the first error.</li>
+     *       <li>Recommended for production use to ensure data quality and integrity.</li>
+     *     </ul>
+     *   </li>
+     *
+     *   <li><b>strictMapping: false</b>
+     *     <ul>
+     *       <li>Continues processing even if some fields fail to map.</li>
+     *       <li>Logs a warning for each failed mapping.</li>
+     *       <li>Skips problematic records but still processes valid ones.</li>
+     *       <li>Useful for debugging, partial loads, or exploratory data analysis.</li>
+     *     </ul>
+     *   </li>
+     * </ul>
+     *
+     * <p><b>Example Error Handling:</b></p>
+     *
+     * <pre>{@code
+     * // strictMapping: true
+     * if (fieldMappingFails) {
+     *     throw new ModelConversionException("Required field 'currency' not found");
+     * }
+     *
+     * // strictMapping: false
+     * if (fieldMappingFails) {
+     *     logger.warn("Field 'currency' mapping failed, skipping record");
+     *     return null; // Skip this record
+     * }
+     * }</pre>
+     */
+    public record ModelConfig(
+            @NotBlank(message = "Model class name cannot be blank when target type is 'model'")
+            String className,
+
+            String packageName,
+
+
+            @Pattern(regexp = "^(DIRECT|MAPPED)$",
+                    message = "Mapping strategy must be either 'DIRECT' or 'MAPPED'")
+            String mappingStrategy,
+
+            Boolean strictMapping,
+
+            String dateFormat,
+            String timeZone
+    ) {
+        // Default constructor with sensible defaults
+        public ModelConfig {
+            if (mappingStrategy == null) {
+                mappingStrategy = "MAPPED";
+            }
+            if (strictMapping == null) {
+                strictMapping = true;
             }
         }
     }

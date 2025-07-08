@@ -1,50 +1,84 @@
 data-sourcing:
   data-sources:
-    market_data_csv:
+#    market_data_csv:
+#      type: "CSV"
+#      source:
+#        filePath: "src/main/resources/sample-data/market_data.csv"
+#        delimiter: ","
+#        header: true
+#        encoding: "UTF-8"
+##      target:
+##        table: "public.market_trends"
+#      columnMapping:
+#        - source: "date"
+#          target: "trade_date"
+#          data-type: "LOCALDATE"
+#        - source: "currency_pair"
+#          target: "currency"
+#        - source: "rate"
+#          target: "exchange_rate"
+#          data-type: "DOUBLE"
+#        - source: "volume"
+#          target: "trading_volume"
+#          data-type: "BIGDECIMAL"
+#    market_data_csv_bitemporal:
+#      type: "CSV"
+#      source:
+#        filePath: "src/main/resources/sample-data/market_data.csv"
+#        delimiter: ","
+#        header: true
+#        encoding: "UTF-8"
+##      target:
+##        table: "public.market_trends_bi_temporal"
+##        isBiTemporal: true
+#      columnMapping:
+#        - source: "date"
+#          target: "trade_date"
+#          data-type: "LOCALDATE"
+#          target-date-format: "dd-MM-yyyy"
+#        - source: "currency_pair"
+#          target: "currency"
+#        - source: "rate"
+#          target: "exchange_rate"
+#          data-type: "DOUBLE"
+#        - source: "volume"
+#          target: "trading_volume"
+#          data-type: "BIGDECIMAL"
+    # Model-based loading (Flow 2)
+    market_data_model:
       type: "CSV"
       source:
         filePath: "src/main/resources/sample-data/market_data.csv"
         delimiter: ","
         header: true
         encoding: "UTF-8"
-#      target:
-#        table: "public.market_trends"
+      target:
+        type: "model"  # Model-based loading
       columnMapping:
         - source: "date"
-          target: "trade_date"
-          data-type: "LOCALDATE"
+          target: "tradeDate"  # Maps to DTO field name
+          dataType: "LOCALDATE"
+          sourceDateFormat: "yyyy-MM-dd"
         - source: "currency_pair"
           target: "currency"
+          dataType: "STRING"
         - source: "rate"
-          target: "exchange_rate"
-          data-type: "DOUBLE"
+          target: "exchangeRate"
+          dataType: "BIGDECIMAL"
         - source: "volume"
-          target: "trading_volume"
-          data-type: "BIGDECIMAL"
-    market_data_csv_bitemporal:
-      type: "CSV"
-      source:
-        filePath: "src/main/resources/sample-data/market_data.csv"
-        delimiter: ","
-        header: true
-        encoding: "UTF-8"
-#      target:
-#        table: "public.market_trends_bi_temporal"
-#        isBiTemporal: true
-      columnMapping:
-        - source: "date"
-          target: "trade_date"
-          data-type: "LOCALDATE"
-          target-date-format: "dd-MM-yyyy"
-        - source: "currency_pair"
-          target: "currency"
-        - source: "rate"
-          target: "exchange_rate"
-          data-type: "DOUBLE"
-        - source: "volume"
-          target: "trading_volume"
-          data-type: "BIGDECIMAL"
-
+          target: "tradingVolume"
+          dataType: "LONG"
+          defaultValue: "0"
+      model:
+        className: "MarketDataDTO"
+        packageName: "com.java.lld.oops.configdriven.dataloading.model.dto"
+        mappingStrategy: "MAPPED"  # Use column mappings
+        strictMapping: false
+        dateFormat: "yyyy-MM-dd"
+        timeZone: "UTC"
+      validation:
+        requiredColumns: [ "date", "currency_pair", "rate" ]
+        dataQualityChecks: true
 # All data type conversions are supported - check DataTypeConverter class that is being used by orchestrator
 # test mode - we can remove target option
 # test mode - we can exclude the dataTypeValidationRequired option

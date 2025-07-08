@@ -68,6 +68,59 @@ public class DataTypeConverter {
         }
     }
 
+    /**
+     * Converts a given string value to a typed Java object for model population.
+     * Returns Java types (LocalDate, LocalDateTime) instead of SQL types.
+     *
+     * @param value   the raw input string
+     * @param mapping the column mapping definition
+     * @return converted Java object for model field assignment
+     */
+    public Object convertForModel(String value, ColumnMapping mapping) {
+        if (value == null || value.isBlank()) {
+            return handleNullValueForModel(mapping);
+        }
+
+        if ("no".equalsIgnoreCase(mapping.dataTypeValidationRequired()) ||
+                "n".equalsIgnoreCase(mapping.dataTypeValidationRequired()) ||
+                "0".equals(mapping.dataTypeValidationRequired())) {
+            return value.strip();
+        }
+
+        try {
+            return switch (mapping.dataType().toUpperCase()) {
+                case "STRING" -> value.strip();
+                case "INTEGER" -> Integer.valueOf(value.strip());
+                case "LONG" -> Long.valueOf(value.strip());
+                case "DOUBLE" -> Double.valueOf(value.strip());
+                case "BIGDECIMAL" -> new BigDecimal(value.strip());
+                case "BOOLEAN" -> parseBoolean(value.strip());
+                case "LOCALDATE" -> parseLocalDate(value.strip(), mapping.sourceDateFormat()); // Returns LocalDate
+                case "LOCALDATETIME", "TIMESTAMP" -> parseLocalDateTime(value.strip(), mapping.sourceDateFormat()); // Returns LocalDateTime
+                default -> value.strip();
+            };
+        } catch (Exception e) {
+            log.error("Model conversion error for value '{}' to type '{}': {}", value, mapping.dataType(), e.getMessage());
+            throw new DataConversionException(
+                    String.format("Failed to convert value '%s' to type '%s' for model field '%s'",
+                            value, mapping.dataType(), mapping.target()), e);
+        }
+    }
+
+    /**
+     * Handles null values for model conversion with proper Java types
+     */
+    private Object handleNullValueForModel(ColumnMapping mapping) {
+        if (mapping.defaultValue() != null && !mapping.defaultValue().isBlank()) {
+            return convertForModel(mapping.defaultValue(), new ColumnMapping(
+                    mapping.source(), mapping.target(), mapping.dataType(),
+                    mapping.sourceDateFormat(), mapping.targetDateFormat(),
+                    mapping.timeZone(), mapping.decimalFormat(), "no", null));
+        }
+        return null;
+    }
+
+
     private Date convertToSqlDate(String value, ColumnMapping mapping) {
         LocalDate date = parseLocalDate(value, mapping.sourceDateFormat());
         return Date.valueOf(date);
