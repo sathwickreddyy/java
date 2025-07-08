@@ -1,6 +1,8 @@
 package com.java.lld.oops.configdriven.dataloading;
 
 import com.java.lld.oops.configdriven.dataloading.dto.MarketDataDTO;
+import com.java.lld.oops.configdriven.dataloading.dto.PortfolioDTO;
+import com.java.lld.oops.configdriven.dataloading.dto.RiskMetricsDTO;
 import com.java.lld.oops.configdriven.dataloading.model.ModelLoadingResult;
 import com.java.lld.oops.configdriven.dataloading.service.DataOrchestrator;
 import lombok.extern.slf4j.Slf4j;
@@ -9,13 +11,9 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
-import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import java.util.List;
-
 @Slf4j
-@EnableAsync
 @SpringBootApplication
 @EnableTransactionManagement
 @ConfigurationPropertiesScan
@@ -26,30 +24,120 @@ public class ConfigDrivenDataLoadingApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        log.info("DataLoaderConfiguration initialized:");
+        log.info("Starting Config-Driven Data Loading Framework Testing");
 
+        // Test Scenario 1: Perfect Data - All fields present and valid
+        testScenario1_PerfectData();
+
+        // Test Scenario 2: Missing Required Fields
+        testScenario2_MissingRequiredFields();
+
+        // Test Scenario 3: Invalid Data Types and Formats
+        testScenario3_InvalidDataTypes();
+
+        // Test Scenario 4: Null Values and Empty Strings
+        testScenario4_NullAndEmptyValues();
+
+        // Test Scenario 5: Boundary Value Testing
+        testScenario5_BoundaryValues();
+
+        // Test Scenario 6: Mixed Valid/Invalid Records
+        testScenario6_MixedData();
+
+        // Test Scenario 7: Portfolio Data with Pattern Validation
+        testScenario7_PortfolioData();
+
+        // Test Scenario 8: Risk Metrics with Financial Validation
+        testScenario8_RiskMetrics();
+
+        log.info("All test scenarios completed");
+    }
+
+    private void testScenario1_PerfectData() {
+        log.info("=== Test Scenario 1: Perfect Data ===");
         try {
-            ModelLoadingResult<MarketDataDTO> result1 = dataOrchestrator.executeModelLoading("market_data_model", MarketDataDTO.class);
-
-////            String reportingDate = LocalDate.now().toString();
-////            ExecutionResult result2 = dataOrchestrator.executeDataSourcingWithBiTemporality(
-////                    "market_data_csv_bitemporal", reportingDate);
-//
-////            List<ExecutionResult> results = List.of(result1); //, result2);
-//
-//            // Print results
-//            log.info("Execution results:");
-//            results.forEach(result -> {
-//                log.info("Data source: {}, Records processed: {}, Records per second: {}, Errors: {}",
-//                        result.dataSourceName(),
-//                        result.processedRecords(),
-//                        result.stats() != null ? result.stats().recordsPerSecond() : "N/A",
-//                        result.errors());
-//            });
-            printModelLoadingResult(result1);
+            ModelLoadingResult<MarketDataDTO> result = dataOrchestrator.executeModelLoading(
+                    "market_data_perfect", MarketDataDTO.class);
+            printModelLoadingResult(result);
         } catch (Exception e) {
-            log.error("Unexpected error during data loading execution: {}", e.getMessage(), e);
-            throw e; // Rethrow if you want the application to fail fast
+            log.error("Error in scenario 1: {}", e.getMessage(), e);
+        }
+    }
+
+    private void testScenario2_MissingRequiredFields() {
+        log.info("=== Test Scenario 2: Missing Required Fields ===");
+        try {
+            ModelLoadingResult<MarketDataDTO> result = dataOrchestrator.executeModelLoading(
+                    "market_data_missing_required", MarketDataDTO.class);
+            printModelLoadingResult(result);
+        } catch (Exception e) {
+            log.error("Error in scenario 2: {}", e.getMessage(), e);
+        }
+    }
+
+    private void testScenario3_InvalidDataTypes() {
+        log.info("=== Test Scenario 3: Invalid Data Types ===");
+        try {
+            ModelLoadingResult<MarketDataDTO> result = dataOrchestrator.executeModelLoading(
+                    "market_data_invalid_types", MarketDataDTO.class);
+            printModelLoadingResult(result);
+        } catch (Exception e) {
+            log.error("Error in scenario 3: {}", e.getMessage(), e);
+        }
+    }
+
+    private void testScenario4_NullAndEmptyValues() {
+        log.info("=== Test Scenario 4: Null and Empty Values ===");
+        try {
+            ModelLoadingResult<MarketDataDTO> result = dataOrchestrator.executeModelLoading(
+                    "market_data_null_empty", MarketDataDTO.class);
+            printModelLoadingResult(result);
+        } catch (Exception e) {
+            log.error("Error in scenario 4: {}", e.getMessage(), e);
+        }
+    }
+
+    private void testScenario5_BoundaryValues() {
+        log.info("=== Test Scenario 5: Boundary Values ===");
+        try {
+            ModelLoadingResult<MarketDataDTO> result = dataOrchestrator.executeModelLoading(
+                    "market_data_boundary", MarketDataDTO.class);
+            printModelLoadingResult(result);
+        } catch (Exception e) {
+            log.error("Error in scenario 5: {}", e.getMessage(), e);
+        }
+    }
+
+    private void testScenario6_MixedData() {
+        log.info("=== Test Scenario 6: Mixed Valid/Invalid Data ===");
+        try {
+            ModelLoadingResult<MarketDataDTO> result = dataOrchestrator.executeModelLoading(
+                    "market_data_mixed", MarketDataDTO.class);
+            printModelLoadingResult(result);
+        } catch (Exception e) {
+            log.error("Error in scenario 6: {}", e.getMessage(), e);
+        }
+    }
+
+    private void testScenario7_PortfolioData() {
+        log.info("=== Test Scenario 7: Portfolio Data with Pattern Validation ===");
+        try {
+            ModelLoadingResult<PortfolioDTO> result = dataOrchestrator.executeModelLoading(
+                    "portfolio_data_validation", PortfolioDTO.class);
+            printModelLoadingResult(result);
+        } catch (Exception e) {
+            log.error("Error in scenario 7: {}", e.getMessage(), e);
+        }
+    }
+
+    private void testScenario8_RiskMetrics() {
+        log.info("=== Test Scenario 8: Risk Metrics with Financial Validation ===");
+        try {
+            ModelLoadingResult<RiskMetricsDTO> result = dataOrchestrator.executeModelLoading(
+                    "risk_metrics_validation", RiskMetricsDTO.class);
+            printModelLoadingResult(result);
+        } catch (Exception e) {
+            log.error("Error in scenario 8: {}", e.getMessage(), e);
         }
     }
 
@@ -63,13 +151,24 @@ public class ConfigDrivenDataLoadingApplication implements CommandLineRunner {
         System.out.println("Duration (ms)       : " + result.durationMs());
         System.out.println("Execution Time      : " + result.executionTime());
         System.out.println("Error Message       : " + (result.errorMessage() != null ? result.errorMessage() : "None"));
+
+        // Display validation errors
+        if (result.validationErrors() != null && !result.validationErrors().isEmpty()) {
+            System.out.println("Validation Errors   : ");
+            result.validationErrors().forEach(error -> System.out.println("  - " + error));
+        }
+
         System.out.println("Models Loaded       : ");
-        result.models().forEach(model -> System.out.println(" - " + model));
-        System.out.println("--------------------------------");
+        if (result.models().isEmpty()) {
+            System.out.println(" - No models loaded");
+        } else {
+            result.models().forEach(model -> System.out.println(" - " + model));
+        }
+        System.out.println("--------------------------------\n");
     }
+
 
     public static void main(String[] args) {
         SpringApplication.run(ConfigDrivenDataLoadingApplication.class, args);
     }
-
 }

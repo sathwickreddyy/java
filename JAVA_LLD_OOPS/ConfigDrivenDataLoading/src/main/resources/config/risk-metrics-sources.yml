@@ -1,0 +1,58 @@
+# src/main/resources/config/risk-metrics-sources.yml
+data-sourcing:
+  data-sources:
+    risk_metrics_validation:
+      identifier: "RiskMetricsValidation"
+      type: "CSV"
+      source:
+        filePath: "src/main/resources/sample-data/risk_metrics_validation.csv"
+        delimiter: ","
+        header: true
+        encoding: "UTF-8"
+      target:
+        schema: "public"
+        table: "risk_metrics"
+        type: "model"
+        batchSize: 50
+      columnMapping:
+        - source: "portfolio_id"
+          target: "portfolioId"
+          dataType: "STRING"
+          required: true
+        - source: "var_95"
+          target: "var95"
+          dataType: "BIGDECIMAL"
+          required: true
+        - source: "expected_shortfall"
+          target: "expectedShortfall"
+          dataType: "BIGDECIMAL"
+        - source: "liquidity_score"
+          target: "liquidityScore"
+          dataType: "BIGDECIMAL"
+        - source: "report_date"
+          target: "reportDate"
+          dataType: "LOCALDATE"
+          sourceDateFormat: "yyyy-MM-dd"
+          required: true
+        - source: "beta"
+          target: "beta"
+          dataType: "BIGDECIMAL"
+        - source: "sharpe_ratio"
+          target: "sharpeRatio"
+          dataType: "BIGDECIMAL"
+        - source: "max_drawdown"
+          target: "maxDrawdown"
+          dataType: "BIGDECIMAL"
+        - source: "risk_category"
+          target: "riskCategory"
+          dataType: "STRING"
+        - source: "is_stress_test_passed"
+          target: "isStressTestPassed"
+          dataType: "BOOLEAN"
+      model:
+        className: "RiskMetricsDTO"
+        mappingStrategy: "MAPPED"
+        strictMapping: false
+      validation:
+        requiredColumns: ["portfolio_id", "var_95", "report_date"]
+        dataQualityChecks: true

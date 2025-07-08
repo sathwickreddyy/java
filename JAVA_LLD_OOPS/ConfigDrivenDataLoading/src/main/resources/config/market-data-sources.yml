@@ -1,0 +1,221 @@
+# src/main/resources/config/market-data-sources.yml
+data-sourcing:
+  data-sources:
+    # Scenario 1: Perfect Data
+    market_data_perfect:
+      identifier: "MarketDataPerfect"
+      type: "CSV"
+      source:
+        filePath: "src/main/resources/sample-data/market_data_perfect.csv"
+        delimiter: ","
+        header: true
+        encoding: "UTF-8"
+      target:
+        type: "model"
+      columnMapping:
+        - source: "trade_date"
+          target: "tradeDate"
+          dataType: "LOCALDATE"
+          sourceDateFormat: "yyyy-MM-dd"
+          required: true
+        - source: "currency_pair"
+          target: "currency"
+          dataType: "STRING"
+          required: true
+        - source: "exchange_rate"
+          target: "exchangeRate"
+          dataType: "BIGDECIMAL"
+          required: true
+        - source: "trading_volume"
+          target: "tradingVolume"
+          dataType: "LONG"
+        - source: "market_type"
+          target: "marketType"
+          dataType: "STRING"
+        - source: "region"
+          target: "region"
+          dataType: "STRING"
+        - source: "high_price"
+          target: "highPrice"
+          dataType: "BIGDECIMAL"
+        - source: "low_price"
+          target: "lowPrice"
+          dataType: "BIGDECIMAL"
+        - source: "is_active"
+          target: "isActive"
+          dataType: "BOOLEAN"
+      model:
+        className: "MarketDataDTO"
+        mappingStrategy: "MAPPED"
+        strictMapping: true
+      validation:
+        requiredColumns: ["trade_date", "currency_pair", "exchange_rate"]
+        dataQualityChecks: true
+
+    # Scenario 2: Missing Required Fields
+    market_data_missing_required:
+      identifier: "MarketDataMissingRequired"
+      type: "CSV"
+      source:
+        filePath: "src/main/resources/sample-data/market_data_missing_required.csv"
+        delimiter: ","
+        header: true
+        encoding: "UTF-8"
+      target:
+        type: "model"
+      columnMapping:
+        - source: "trade_date"
+          target: "tradeDate"
+          dataType: "LOCALDATE"
+          sourceDateFormat: "yyyy-MM-dd"
+          required: true
+        - source: "currency_pair"
+          target: "currency"
+          dataType: "STRING"
+          required: true
+        - source: "exchange_rate"
+          target: "exchangeRate"
+          dataType: "BIGDECIMAL"
+          required: true
+        - source: "trading_volume"
+          target: "tradingVolume"
+          dataType: "LONG"
+      model:
+        className: "MarketDataDTO"
+        mappingStrategy: "MAPPED"
+        strictMapping: false
+      validation:
+        requiredColumns: ["trade_date", "currency_pair", "exchange_rate"]
+        dataQualityChecks: true
+
+    # Scenario 3: Invalid Data Types
+    market_data_invalid_types:
+      identifier: "MarketDataInvalidTypes"
+      type: "CSV"
+      source:
+        filePath: "src/main/resources/sample-data/market_data_invalid_types.csv"
+        delimiter: ","
+        header: true
+        encoding: "UTF-8"
+      target:
+        type: "model"
+      columnMapping:
+        - source: "trade_date"
+          target: "tradeDate"
+          dataType: "LOCALDATE"
+          sourceDateFormat: "yyyy-MM-dd"
+        - source: "currency_pair"
+          target: "currency"
+          dataType: "STRING"
+        - source: "exchange_rate"
+          target: "exchangeRate"
+          dataType: "BIGDECIMAL"
+        - source: "trading_volume"
+          target: "tradingVolume"
+          dataType: "LONG"
+      model:
+        className: "MarketDataDTO"
+        mappingStrategy: "MAPPED"
+        strictMapping: false
+      validation:
+        dataQualityChecks: true
+
+    # Scenario 4: Null and Empty Values
+    market_data_null_empty:
+      identifier: "MarketDataNullEmpty"
+      type: "CSV"
+      source:
+        filePath: "src/main/resources/sample-data/market_data_null_empty.csv"
+        delimiter: ","
+        header: true
+        encoding: "UTF-8"
+      target:
+        type: "model"
+      columnMapping:
+        - source: "trade_date"
+          target: "tradeDate"
+          dataType: "LOCALDATE"
+          sourceDateFormat: "yyyy-MM-dd"
+          defaultValue: "2024-01-01"
+        - source: "currency_pair"
+          target: "currency"
+          dataType: "STRING"
+          defaultValue: "USD/EUR"
+        - source: "exchange_rate"
+          target: "exchangeRate"
+          dataType: "BIGDECIMAL"
+          defaultValue: "1.0000"
+        - source: "trading_volume"
+          target: "tradingVolume"
+          dataType: "LONG"
+          defaultValue: "0"
+      model:
+        className: "MarketDataDTO"
+        mappingStrategy: "MAPPED"
+        strictMapping: false
+      validation:
+        dataQualityChecks: true
+
+    # Scenario 5: Boundary Values
+    market_data_boundary:
+      identifier: "MarketDataBoundary"
+      type: "CSV"
+      source:
+        filePath: "src/main/resources/sample-data/market_data_boundary.csv"
+        delimiter: ","
+        header: true
+        encoding: "UTF-8"
+      target:
+        type: "model"
+      columnMapping:
+        - source: "trade_date"
+          target: "tradeDate"
+          dataType: "LOCALDATE"
+          sourceDateFormat: "yyyy-MM-dd"
+        - source: "currency_pair"
+          target: "currency"
+          dataType: "STRING"
+        - source: "exchange_rate"
+          target: "exchangeRate"
+          dataType: "BIGDECIMAL"
+        - source: "trading_volume"
+          target: "tradingVolume"
+          dataType: "LONG"
+      model:
+        className: "MarketDataDTO"
+        mappingStrategy: "MAPPED"
+        strictMapping: false
+      validation:
+        dataQualityChecks: true
+
+    # Scenario 6: Mixed Valid/Invalid Data
+    market_data_mixed:
+      identifier: "MarketDataMixed"
+      type: "CSV"
+      source:
+        filePath: "src/main/resources/sample-data/market_data_mixed.csv"
+        delimiter: ","
+        header: true
+        encoding: "UTF-8"
+      target:
+        type: "model"
+      columnMapping:
+        - source: "trade_date"
+          target: "tradeDate"
+          dataType: "LOCALDATE"
+          sourceDateFormat: "yyyy-MM-dd"
+        - source: "currency_pair"
+          target: "currency"
+          dataType: "STRING"
+        - source: "exchange_rate"
+          target: "exchangeRate"
+          dataType: "BIGDECIMAL"
+        - source: "trading_volume"
+          target: "tradingVolume"
+          dataType: "LONG"
+      model:
+        className: "MarketDataDTO"
+        mappingStrategy: "MAPPED"
+        strictMapping: false
+      validation:
+        dataQualityChecks: true

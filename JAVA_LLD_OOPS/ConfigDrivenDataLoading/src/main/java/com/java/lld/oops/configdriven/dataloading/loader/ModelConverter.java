@@ -2,14 +2,16 @@ package com.java.lld.oops.configdriven.dataloading.loader;
 
 import com.java.lld.oops.configdriven.dataloading.config.DataLoaderConfiguration;
 import com.java.lld.oops.configdriven.dataloading.model.DataRecord;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 /**
@@ -21,22 +23,130 @@ import java.util.stream.Stream;
 public class ModelConverter {
     
     private final DataTypeConverter dataTypeConverter;
+    private final Validator validator;
 
-    public ModelConverter(DataTypeConverter dataTypeConverter) {
+    public ModelConverter(DataTypeConverter dataTypeConverter, Validator validator) {
         this.dataTypeConverter = dataTypeConverter;
+        this.validator = validator;
     }
 
     /**
-     * Converts a stream of DataRecord to a stream of model objects
+     * Result wrapper for model conversion with error tracking
+     */
+    @Getter
+    public static class ModelConversionResult<T> {
+        // Getters
+        private final List<T> models;
+        private final List<String> errors;
+        private final int totalRecords;
+        private final int successfulRecords;
+        private final int errorRecords;
+
+        public ModelConversionResult(List<T> models, List<String> errors, int totalRecords) {
+            this.models = models;
+            this.errors = errors;
+            this.totalRecords = totalRecords;
+            this.successfulRecords = models.size();
+            this.errorRecords = errors.size();
+        }
+
+    }
+
+    /**
+     * Enhanced method that converts DataRecord stream to models with comprehensive error tracking
+     */
+    public <T> ModelConversionResult<T> convertToModelsWithErrorTracking(Stream<DataRecord> dataStream,
+                                                                         Class<T> modelClass,
+                                                                         DataLoaderConfiguration.DataSourceDefinition config) {
+        log.debug("Starting conversion to model type: {} with error tracking", modelClass.getSimpleName());
+
+        List<T> models = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
+        AtomicInteger totalRecords = new AtomicInteger(0);
+
+        dataStream.forEach(record -> {
+            totalRecords.incrementAndGet();
+
+            if (!record.valid()) {
+                String errorMsg = String.format("Record %d is invalid: %s",
+                        record.rowNumber(), record.errorMessage());
+                errors.add(errorMsg);
+                log.warn(errorMsg);
+                return;
+            }
+
+            try {
+                T model = convertToModelSafely(record, modelClass, config);
+                if (model != null) {
+                    models.add(model);
+                    log.debug("Successfully converted record {} to model {}",
+                            record.rowNumber(), modelClass.getSimpleName());
+                }
+            } catch (ModelConversionException e) {
+                errors.add(e.getMessage());
+                log.error("Conversion failed for record {}: {}", record.rowNumber(), e.getMessage());
+            } catch (Exception e) {
+                String errorMsg = String.format("Unexpected error converting record %d: %s",
+                        record.rowNumber(), e.getMessage());
+                errors.add(errorMsg);
+                log.error(errorMsg, e);
+            }
+        });
+
+        log.info("Model conversion completed. Total: {}, Successful: {}, Errors: {}",
+                totalRecords.get(), models.size(), errors.size());
+
+        return new ModelConversionResult<>(models, errors, totalRecords.get());
+    }
+
+    /**
+     * Safe conversion method that handles errors gracefully
+     */
+    private <T> T convertToModelSafely(DataRecord record, Class<T> modelClass,
+                                       DataLoaderConfiguration.DataSourceDefinition config) {
+        try {
+            T instance = modelClass.getDeclaredConstructor().newInstance();
+
+            if ("DIRECT".equals(config.model().mappingStrategy())) {
+                populateModelDirect(instance, record.data(), modelClass);
+            } else {
+                populateModelMapped(instance, record.data(), modelClass, config.columnMapping());
+            }
+
+            // Validate the populated model
+            if (config.validation() != null && config.validation().dataQualityChecks()) {
+                Set<ConstraintViolation<T>> violations = validator.validate(instance);
+                if (!violations.isEmpty()) {
+                    StringBuilder errorMessage = new StringBuilder("Validation errors for record " + record.rowNumber() + ": ");
+                    violations.forEach(violation ->
+                            errorMessage.append(violation.getPropertyPath()).append(" - ").append(violation.getMessage()).append("; "));
+
+                    log.warn("Validation failed for record {}: {}", record.rowNumber(), errorMessage);
+
+                    // Always throw exception to be caught and handled properly
+                    throw new ModelConversionException(errorMessage.toString());
+                }
+            }
+
+            return instance;
+
+        } catch (ModelConversionException e) {
+            // Re-throw validation exceptions
+            throw e;
+        } catch (Exception e) {
+            // Wrap other exceptions
+            throw new ModelConversionException(
+                    String.format("Failed to convert record %d: %s", record.rowNumber(), e.getMessage()), e);
+        }
+    }
+
+    /**
+     * Legacy method for backward compatibility - now delegates to error tracking version
      */
     public <T> Stream<T> convertToModels(Stream<DataRecord> dataStream, Class<T> modelClass,
                                          DataLoaderConfiguration.DataSourceDefinition config) {
-        log.debug("Starting conversion to model type: {}", modelClass.getSimpleName());
-
-        return dataStream
-                .filter(DataRecord::valid)
-                .map(record -> convertToModel(record, modelClass, config))
-                .filter(java.util.Objects::nonNull);
+        ModelConversionResult<T> result = convertToModelsWithErrorTracking(dataStream, modelClass, config);
+        return result.getModels().stream();
     }
 
     /**
@@ -51,18 +161,33 @@ public class ModelConverter {
     }
 
     /**
-     * Converts a single DataRecord to a model object
+     * Converts a single DataRecord to a model object with validation
      */
     private <T> T convertToModel(DataRecord record, Class<T> modelClass, DataLoaderConfiguration.DataSourceDefinition config) {
         try {
             T instance = modelClass.getDeclaredConstructor().newInstance();
 
             if ("DIRECT".equals(config.model().mappingStrategy())) {
-                // Direct mapping: field names match exactly
                 populateModelDirect(instance, record.data(), modelClass);
             } else {
-                // Mapped strategy: use column mappings
                 populateModelMapped(instance, record.data(), modelClass, config.columnMapping());
+            }
+
+            // Validate the populated model
+            if (config.validation() != null && config.validation().dataQualityChecks()) {
+                Set<ConstraintViolation<T>> violations = validator.validate(instance);
+                if (!violations.isEmpty()) {
+                    StringBuilder errorMessage = new StringBuilder("Validation errors for record " + record.rowNumber() + ": ");
+                    violations.forEach(violation ->
+                            errorMessage.append(violation.getPropertyPath()).append(" - ").append(violation.getMessage()).append("; "));
+
+                    log.error("Validation failed for record {}: {}", record.rowNumber(), errorMessage);
+
+                    if (config.model().strictMapping()) {
+                        throw new ModelConversionException(errorMessage.toString());
+                    }
+                    return null; // Skip invalid records in lenient mode
+                }
             }
 
             log.debug("Successfully converted record {} to model {}",
@@ -81,6 +206,7 @@ public class ModelConverter {
             return null;
         }
     }
+
 
     /**
      * Converts a model object to DataRecord

@@ -239,7 +239,8 @@ public class DataOrchestrator {
             return ModelLoadingResult.failure(
                     modelClass.getSimpleName(),
                     e.getMessage(),
-                    0, 0, 0, 0
+                    0, 0, 0, 0,
+                    List.of(e.getMessage())
             );
         }
     }

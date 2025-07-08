@@ -40,9 +40,6 @@ public class ModelLoader<T> {
                 modelClass.getSimpleName(), config.type());
 
         long startTime = System.currentTimeMillis();
-        int totalRecords = 0;
-        int successfulRecords = 0;
-        int errorRecords = 0;
 
         try {
             // Validate configuration for model loading
@@ -54,28 +51,30 @@ public class ModelLoader<T> {
 
             log.debug("Raw data loaded successfully, starting model conversion");
 
-            // Convert to model objects
-            Stream<T> modelStream = modelConverter.convertToModels(dataStream, modelClass, config);
-
-            // Collect results and count records
-            List<T> models = modelStream.collect(java.util.stream.Collectors.toList());
-
-            successfulRecords = models.size();
-            totalRecords = successfulRecords; // For now, assuming all loaded records are successful
+            // Convert to model objects with error tracking
+            ModelConverter.ModelConversionResult<T> conversionResult =
+                    modelConverter.convertToModelsWithErrorTracking(dataStream, modelClass, config);
 
             long endTime = System.currentTimeMillis();
             long duration = endTime - startTime;
 
-            log.info("Model loading completed successfully. Loaded {} models of type {} in {} ms",
-                    successfulRecords, modelClass.getSimpleName(), duration);
+            // Determine success based on whether we have any successful conversions
+            boolean success = conversionResult.getSuccessfulRecords() > 0;
+
+            log.info("Model loading completed. Total: {}, Successful: {}, Errors: {} in {} ms",
+                    conversionResult.getTotalRecords(),
+                    conversionResult.getSuccessfulRecords(),
+                    conversionResult.getErrorRecords(),
+                    duration);
 
             return ModelLoadingResult.success(
                     modelClass.getSimpleName(),
-                    models,
-                    totalRecords,
-                    successfulRecords,
-                    errorRecords,
-                    duration
+                    conversionResult.getModels(),
+                    conversionResult.getTotalRecords(),
+                    conversionResult.getSuccessfulRecords(),
+                    conversionResult.getErrorRecords(),
+                    duration,
+                    conversionResult.getErrors()
             );
 
         } catch (Exception e) {
@@ -88,13 +87,13 @@ public class ModelLoader<T> {
             return ModelLoadingResult.failure(
                     modelClass.getSimpleName(),
                     e.getMessage(),
-                    totalRecords,
-                    successfulRecords,
-                    errorRecords,
-                    duration
+                    0, 0, 0,
+                    duration,
+                    List.of(e.getMessage())
             );
         }
     }
+
 
     /**
      * Validates that the configuration is suitable for model loading

@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Result object for model loading operations
+ * Enhanced result object for model loading operations with error tracking
  */
 public record ModelLoadingResult<T>(
         String modelType,
@@ -15,12 +15,14 @@ public record ModelLoadingResult<T>(
         int errorRecords,
         long durationMs,
         LocalDateTime executionTime,
-        String errorMessage
+        String errorMessage,
+        List<String> validationErrors  // New field for detailed error messages
 ) {
 
     public static <T> ModelLoadingResult<T> success(String modelType, List<T> models,
                                                     int totalRecords, int successfulRecords,
-                                                    int errorRecords, long durationMs) {
+                                                    int errorRecords, long durationMs,
+                                                    List<String> validationErrors) {
         return new ModelLoadingResult<>(
                 modelType,
                 true,
@@ -30,13 +32,15 @@ public record ModelLoadingResult<T>(
                 errorRecords,
                 durationMs,
                 LocalDateTime.now(),
-                null
+                null,
+                validationErrors
         );
     }
 
     public static <T> ModelLoadingResult<T> failure(String modelType, String errorMessage,
                                                     int totalRecords, int successfulRecords,
-                                                    int errorRecords, long durationMs) {
+                                                    int errorRecords, long durationMs,
+                                                    List<String> validationErrors) {
         return new ModelLoadingResult<>(
                 modelType,
                 false,
@@ -46,7 +50,8 @@ public record ModelLoadingResult<T>(
                 errorRecords,
                 durationMs,
                 LocalDateTime.now(),
-                errorMessage
+                errorMessage,
+                validationErrors
         );
     }
 }

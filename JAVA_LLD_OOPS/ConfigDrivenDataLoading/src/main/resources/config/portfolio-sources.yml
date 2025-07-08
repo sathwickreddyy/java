@@ -1,0 +1,59 @@
+# src/main/resources/config/portfolio-sources.yml
+data-sourcing:
+  data-sources:
+    portfolio_data_validation:
+      identifier: "PortfolioDataValidation"
+      type: "CSV"
+      source:
+        filePath: "src/main/resources/sample-data/portfolio_data_validation.csv"
+        delimiter: ","
+        header: true
+        encoding: "UTF-8"
+      target:
+        schema: "public"
+        table: "portfolio_config"
+        type: "model"
+        batchSize: 50
+      columnMapping:
+        - source: "portfolio_id"
+          target: "portfolioId"
+          dataType: "STRING"
+          required: true
+        - source: "portfolio_name"
+          target: "portfolioName"
+          dataType: "STRING"
+          required: true
+        - source: "risk_profile"
+          target: "riskProfile"
+          dataType: "STRING"
+          required: true
+        - source: "liquidity_threshold"
+          target: "liquidityThreshold"
+          dataType: "BIGDECIMAL"
+          required: true
+        - source: "manager_name"
+          target: "managerName"
+          dataType: "STRING"
+        - source: "inception_date"
+          target: "inceptionDate"
+          dataType: "LOCALDATE"
+          sourceDateFormat: "yyyy-MM-dd"
+        - source: "total_value"
+          target: "totalValue"
+          dataType: "BIGDECIMAL"
+        - source: "number_of_holdings"
+          target: "numberOfHoldings"
+          dataType: "INTEGER"
+        - source: "is_active"
+          target: "isActive"
+          dataType: "BOOLEAN"
+        - source: "currency"
+          target: "currency"
+          dataType: "STRING"
+      model:
+        className: "PortfolioDTO"
+        mappingStrategy: "MAPPED"
+        strictMapping: false
+      validation:
+        requiredColumns: ["portfolio_id", "portfolio_name", "risk_profile", "liquidity_threshold"]
+        dataQualityChecks: true
