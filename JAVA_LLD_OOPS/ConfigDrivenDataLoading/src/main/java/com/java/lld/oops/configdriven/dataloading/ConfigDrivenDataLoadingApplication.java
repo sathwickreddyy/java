@@ -26,6 +26,9 @@ public class ConfigDrivenDataLoadingApplication implements CommandLineRunner {
     public void run(String... args) throws Exception {
         log.info("Starting Config-Driven Data Loading Framework Testing");
 
+        // Test Scenario 0: Selective Column Mapping
+        testScenario0_SelectiveColumnMapping();
+
         // Test Scenario 1: Perfect Data - All fields present and valid
         testScenario1_PerfectData();
 
@@ -51,6 +54,17 @@ public class ConfigDrivenDataLoadingApplication implements CommandLineRunner {
         testScenario8_RiskMetrics();
 
         log.info("All test scenarios completed");
+    }
+
+    private void testScenario0_SelectiveColumnMapping() {
+        log.info("=== Test Scenario 0: Selective Column Mapping (20 CSV columns → 8 Model fields) ===");
+        try {
+            ModelLoadingResult<MarketDataDTO> result = dataOrchestrator.executeModelLoading(
+                    "market_data_selective_mapping", MarketDataDTO.class);
+            printModelLoadingResult(result);
+        } catch (Exception e) {
+            log.error("Error in scenario 9: {}", e.getMessage(), e);
+        }
     }
 
     private void testScenario1_PerfectData() {

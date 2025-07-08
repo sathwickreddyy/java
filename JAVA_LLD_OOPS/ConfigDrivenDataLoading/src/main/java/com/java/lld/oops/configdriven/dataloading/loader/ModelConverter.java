@@ -262,13 +262,31 @@ public class ModelConverter {
     private <T> void populateModelMapped(T instance, Map<String, Object> data, Class<T> modelClass,
                                          List<DataLoaderConfiguration.ColumnMapping> mappings) throws Exception {
 
+        // Log all available columns
+        log.debug("Available columns in data: {}", data.keySet());
+
+        // Log mapped columns
+        Set<String> mappedColumns = mappings.stream()
+                .map(DataLoaderConfiguration.ColumnMapping::source)
+                .collect(java.util.stream.Collectors.toSet());
+        log.debug("Columns being mapped: {}", mappedColumns);
+
+        // Log ignored columns
+        Set<String> ignoredColumns = data.keySet().stream()
+                .filter(col -> !mappedColumns.contains(col))
+                .collect(java.util.stream.Collectors.toSet());
+        if (!ignoredColumns.isEmpty()) {
+            log.info("Ignoring {} unmapped columns: {}", ignoredColumns.size(), ignoredColumns);
+        }
+
         for (DataLoaderConfiguration.ColumnMapping mapping : mappings) {
             if (data.containsKey(mapping.source())) {
                 Object value = data.get(mapping.source());
                 setFieldValue(instance, mapping.target(), value, modelClass);
-
                 log.debug("Mapped '{}' -> '{}' with value '{}' in model {}",
                         mapping.source(), mapping.target(), value, modelClass.getSimpleName());
+            } else {
+                log.warn("Mapped column '{}' not found in source data", mapping.source());
             }
         }
     }

@@ -219,3 +219,53 @@ data-sourcing:
         strictMapping: false
       validation:
         dataQualityChecks: true
+
+    # Scenario 9: Selective Column Mapping - 20 columns to 8 fields
+    market_data_selective_mapping:
+      identifier: "MarketDataSelectiveMapping"
+      type: "CSV"
+      source:
+        filePath: "src/main/resources/sample-data/market_data_20_columns.csv"
+        delimiter: ","
+        header: true
+        encoding: "UTF-8"
+      target:
+        type: "model"
+      columnMapping:
+        # Only map the 8 columns we need - ignore the other 12
+        - source: "trade_date"
+          target: "tradeDate"
+          dataType: "LOCALDATE"
+          sourceDateFormat: "yyyy-MM-dd"
+          required: true
+        - source: "currency_pair"
+          target: "currency"
+          dataType: "STRING"
+          required: true
+        - source: "exchange_rate"
+          target: "exchangeRate"
+          dataType: "BIGDECIMAL"
+          required: true
+        - source: "trading_volume"
+          target: "tradingVolume"
+          dataType: "LONG"
+        - source: "market_type"
+          target: "marketType"
+          dataType: "STRING"
+        - source: "region"
+          target: "region"
+          dataType: "STRING"
+        - source: "high_price"
+          target: "highPrice"
+          dataType: "BIGDECIMAL"
+        - source: "low_price"
+          target: "lowPrice"
+          dataType: "BIGDECIMAL"
+        # Note: 12 other columns (col1-col12) are intentionally NOT mapped
+      model:
+        className: "MarketDataDTO"
+        mappingStrategy: "MAPPED"
+        strictMapping: false  # Allow unmapped columns to be ignored
+      validation:
+        requiredColumns: [ "trade_date", "currency_pair", "exchange_rate" ]
+        dataQualityChecks: true
