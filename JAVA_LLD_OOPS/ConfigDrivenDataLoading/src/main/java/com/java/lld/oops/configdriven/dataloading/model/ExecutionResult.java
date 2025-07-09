@@ -1,44 +1,84 @@
 package com.java.lld.oops.configdriven.dataloading.model;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
 /**
  * Represents the result of a data loading execution from a data source.
- *
- * @param dataSourceName   the name of the data source
- * @param success          true if the operation was fully or partially successful; false if completely failed
- * @param totalRecords     total number of records intended to be processed
- * @param processedRecords number of records successfully processed
- * @param errorRecords     number of records that failed to process
- * @param startTime        time when the execution started
- * @param endTime          time when the execution ended
- * @param durationMs       duration of the execution in milliseconds
- * @param errors           list of error messages encountered during processing
+ * Java 11 compatible implementation with traditional getter methods.
  *
  * @author sathwick
  */
-public record ExecutionResult(String dataSourceName,
-                              boolean success,
-                              int totalRecords,
-                              int processedRecords,
-                              int errorRecords,
-                              LocalDateTime startTime,
-                              LocalDateTime endTime,
-                              long durationMs,
-                              List<String> errors,
-                              LoadingStats stats) {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ExecutionResult {
 
     /**
-     * Creates an {@code ExecutionResult} representing a successful execution.
+     * The name of the data source that was executed
+     */
+    private String dataSourceName;
+
+    /**
+     * True if the operation was fully or partially successful; false if completely failed
+     */
+    private boolean success;
+
+    /**
+     * Total number of records intended to be processed
+     */
+    private int totalRecords;
+
+    /**
+     * Number of records successfully processed
+     */
+    private int processedRecords;
+
+    /**
+     * Number of records that failed to process
+     */
+    private int errorRecords;
+
+    /**
+     * Time when the execution started
+     */
+    private LocalDateTime startTime;
+
+    /**
+     * Time when the execution ended
+     */
+    private LocalDateTime endTime;
+
+    /**
+     * Duration of the execution in milliseconds
+     */
+    private long durationMs;
+
+    /**
+     * List of error messages encountered during processing
+     */
+    private List<String> errors;
+
+    /**
+     * Loading statistics for performance analysis
+     */
+    private LoadingStats stats;
+
+    /**
+     * Creates an ExecutionResult representing a successful execution
      *
-     * @param dataSourceName   the name of the data source
-     * @param totalRecords     total records processed
+     * @param dataSourceName the name of the data source
+     * @param totalRecords total records processed
      * @param processedRecords number of records successfully processed
-     * @param startTime        execution start time
-     * @param endTime          execution end time
-     * @return a success {@code ExecutionResult}
+     * @param startTime execution start time
+     * @param endTime execution end time
+     * @param stats loading statistics
+     * @return a success ExecutionResult
      */
     public static ExecutionResult success(String dataSourceName,
                                           int totalRecords,
@@ -61,13 +101,13 @@ public record ExecutionResult(String dataSourceName,
     }
 
     /**
-     * Creates an {@code ExecutionResult} representing a complete failure.
+     * Creates an ExecutionResult representing a complete failure
      *
      * @param dataSourceName the name of the data source
-     * @param errors         list of error messages
-     * @param startTime      execution start time
-     * @param endTime        execution end time
-     * @return a failure {@code ExecutionResult}
+     * @param errors list of error messages
+     * @param startTime execution start time
+     * @param endTime execution end time
+     * @return a failure ExecutionResult
      */
     public static ExecutionResult failure(String dataSourceName,
                                           List<String> errors,
@@ -88,17 +128,18 @@ public record ExecutionResult(String dataSourceName,
     }
 
     /**
-     * Creates an {@code ExecutionResult} representing a partial success.
-     * Some records were processed successfully while others failed.
+     * Creates an ExecutionResult representing a partial success
+     * Some records were processed successfully while others failed
      *
-     * @param dataSourceName   the name of the data source
-     * @param totalRecords     total number of records intended to be processed
+     * @param dataSourceName the name of the data source
+     * @param totalRecords total number of records intended to be processed
      * @param processedRecords number of records successfully processed
-     * @param errorRecords     number of records that failed
-     * @param errors           list of error messages
-     * @param startTime        execution start time
-     * @param endTime          execution end time
-     * @return a partial success {@code ExecutionResult}
+     * @param errorRecords number of records that failed
+     * @param errors list of error messages
+     * @param startTime execution start time
+     * @param endTime execution end time
+     * @param stats loading statistics
+     * @return a partial success ExecutionResult
      */
     public static ExecutionResult partialSuccess(String dataSourceName,
                                                  int totalRecords,

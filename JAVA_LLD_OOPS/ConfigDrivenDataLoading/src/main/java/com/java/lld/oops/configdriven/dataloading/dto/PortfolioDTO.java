@@ -1,6 +1,6 @@
 package com.java.lld.oops.configdriven.dataloading.dto;
 
-import jakarta.validation.constraints.*;
+import javax.validation.constraints.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 

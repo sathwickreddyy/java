@@ -156,31 +156,37 @@ public class ConfigDrivenDataLoadingApplication implements CommandLineRunner {
     }
 
     public static <T> void printModelLoadingResult(ModelLoadingResult<T> result) {
-        System.out.println("---- Model Loading Result ----");
-        System.out.println("Model Type          : " + result.modelType());
-        System.out.println("Success             : " + result.success());
-        System.out.println("Total Records       : " + result.totalRecords());
-        System.out.println("Successful Records  : " + result.successfulRecords());
-        System.out.println("Error Records       : " + result.errorRecords());
-        System.out.println("Duration (ms)       : " + result.durationMs());
-        System.out.println("Execution Time      : " + result.executionTime());
-        System.out.println("Error Message       : " + (result.errorMessage() != null ? result.errorMessage() : "None"));
-
-        // Display validation errors
-        if (result.validationErrors() != null && !result.validationErrors().isEmpty()) {
-            System.out.println("Validation Errors   : ");
-            result.validationErrors().forEach(error -> System.out.println("  - " + error));
+        if (result == null) {
+            System.out.println("---- Model Loading Result ----");
+            System.out.println("Result is null");
+            System.out.println("--------------------------------\n");
+            return;
         }
 
+        System.out.println("---- Model Loading Result ----");
+        System.out.println("Model Type          : " + result.getModelType());
+        System.out.println("Success             : " + result.isSuccess());
+        System.out.println("Total Records       : " + result.getTotalRecords());
+        System.out.println("Successful Records  : " + result.getSuccessfulRecords());
+        System.out.println("Error Records       : " + result.getErrorRecords());
+        System.out.println("Duration (ms)       : " + result.getDurationMs());
+        System.out.println("Execution Time      : " + result.getExecutionTime());
+        System.out.println("Error Message       : " + (result.getErrorMessage() != null ? result.getErrorMessage() : "None"));
+
+        // Display validation errors if present
+        if (result.getValidationErrors() != null && !result.getValidationErrors().isEmpty()) {
+            System.out.println("Validation Errors   : ");
+            result.getValidationErrors().forEach(error -> System.out.println("  - " + error));
+        }
+
+        // Display loaded models
         System.out.println("Models Loaded       : ");
-        if (result.models().isEmpty()) {
+        if (result.getModels().isEmpty()) {
             System.out.println(" - No models loaded");
         } else {
-            result.models().forEach(model -> System.out.println(" - " + model));
+            result.getModels().forEach(model -> System.out.println(" - " + model));
         }
-        System.out.println("--------------------------------\n");
     }
-
 
     public static void main(String[] args) {
         SpringApplication.run(ConfigDrivenDataLoadingApplication.class, args);

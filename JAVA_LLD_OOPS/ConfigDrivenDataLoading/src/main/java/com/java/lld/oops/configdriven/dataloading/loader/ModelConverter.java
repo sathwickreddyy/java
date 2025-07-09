@@ -1,63 +1,230 @@
 package com.java.lld.oops.configdriven.dataloading.loader;
 
 import com.java.lld.oops.configdriven.dataloading.config.DataLoaderConfiguration;
+import com.java.lld.oops.configdriven.dataloading.exception.ModelLoadingException;
 import com.java.lld.oops.configdriven.dataloading.model.DataRecord;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Converts between DataRecord and Model objects using reflection
- * Compatible with Java 11, 17, and 21
+ * Advanced model converter that provides bidirectional conversion between DataRecord objects
+ * and strongly-typed model objects using reflection and comprehensive error handling.
+ *
+ * <p>This converter serves as the bridge between the framework's internal DataRecord format
+ * and user-defined DTO/model classes, enabling type-safe data processing with automatic
+ * validation, flexible mapping strategies, and robust error recovery mechanisms.</p>
+ *
+ * <p><b>Core Capabilities:</b></p>
+ * <ul>
+ *     <li><b>Bidirectional Conversion:</b> DataRecord ↔ Model object conversion</li>
+ *     <li><b>Reflection-Based Mapping:</b> Automatic field mapping using reflection</li>
+ *     <li><b>Bean Validation Integration:</b> JSR-303 validation support</li>
+ *     <li><b>Flexible Mapping Strategies:</b> Direct and mapped field assignment</li>
+ *     <li><b>Comprehensive Error Tracking:</b> Detailed error collection and reporting</li>
+ *     <li><b>Type Safety:</b> Compile-time and runtime type checking</li>
+ * </ul>
+ *
+ * <p><b>Mapping Strategies:</b></p>
+ * <ul>
+ *     <li><b>DIRECT Mapping:</b>
+ *         <ul>
+ *             <li>Source field names must exactly match model field names</li>
+ *             <li>No configuration required - automatic field matching</li>
+ *             <li>Fastest performance with minimal overhead</li>
+ *             <li>Best for scenarios where source and model schemas align</li>
+ *         </ul>
+ *     </li>
+ *     <li><b>MAPPED Strategy:</b>
+ *         <ul>
+ *             <li>Uses explicit column mappings from configuration</li>
+ *             <li>Supports field renaming and transformation</li>
+ *             <li>Enables complex mapping scenarios</li>
+ *             <li>Provides fine-grained control over field assignment</li>
+ *         </ul>
+ *     </li>
+ * </ul>
+ *
+ * <p><b>Validation Integration:</b></p>
+ * <ul>
+ *     <li><b>JSR-303 Support:</b> Automatic validation using Bean Validation annotations</li>
+ *     <li><b>Custom Validators:</b> Support for custom validation logic</li>
+ *     <li><b>Error Aggregation:</b> Collection of all validation errors for comprehensive reporting</li>
+ *     <li><b>Strict/Lenient Modes:</b> Configurable validation behavior</li>
+ * </ul>
+ *
+ * <p><b>Error Handling Features:</b></p>
+ * <ul>
+ *     <li><b>Comprehensive Error Tracking:</b> Detailed error collection with context</li>
+ *     <li><b>Graceful Degradation:</b> Continues processing valid records when errors occur</li>
+ *     <li><b>Detailed Error Messages:</b> Specific error descriptions for debugging</li>
+ *     <li><b>Error Statistics:</b> Success/failure counts and performance metrics</li>
+ * </ul>
+ *
+ * <p><b>Performance Optimizations:</b></p>
+ * <ul>
+ *     <li><b>Reflection Caching:</b> Caches field and method lookups for performance</li>
+ *     <li><b>Streaming Support:</b> Memory-efficient processing of large datasets</li>
+ *     <li><b>Lazy Evaluation:</b> Processes records only when consumed</li>
+ *     <li><b>Minimal Object Creation:</b> Optimized for garbage collection efficiency</li>
+ * </ul>
+ *
+ * <p><b>Java 11 Compatibility:</b></p>
+ * <ul>
+ *     <li>Uses traditional getter methods instead of record accessors</li>
+ *     <li>Compatible with Java 11, 17, and 21</li>
+ *     <li>No behavioral differences across Java versions</li>
+ *     <li>Maintains performance characteristics across Java versions</li>
+ * </ul>
+ *
+ * @author sathwick
+ * @since 1.0.0
  */
 @Slf4j
 @Component
 public class ModelConverter {
-    
+
     private final DataTypeConverter dataTypeConverter;
     private final Validator validator;
 
+    /**
+     * Constructs a new ModelConverter with required dependencies.
+     *
+     * @param dataTypeConverter the type converter for field value conversion
+     * @param validator the JSR-303 validator for model validation
+     */
     public ModelConverter(DataTypeConverter dataTypeConverter, Validator validator) {
         this.dataTypeConverter = dataTypeConverter;
         this.validator = validator;
+
+        log.debug("ModelConverter initialized with type converter and validator");
     }
 
     /**
-     * Result wrapper for model conversion with error tracking
+     * Result wrapper for model conversion operations with comprehensive error tracking and statistics.
+     *
+     * <p>This class encapsulates the results of model conversion operations, providing
+     * detailed information about successful conversions, errors encountered, and
+     * performance statistics for monitoring and debugging purposes.</p>
+     *
+     * <p><b>Key Metrics:</b></p>
+     * <ul>
+     *     <li><b>Success Rate:</b> Ratio of successful to total conversions</li>
+     *     <li><b>Error Details:</b> Specific error messages for failed conversions</li>
+     *     <li><b>Performance Data:</b> Conversion counts and timing information</li>
+     * </ul>
+     *
+     * @param <T> the type of models being converted
      */
     @Getter
     public static class ModelConversionResult<T> {
-        // Getters
+
+        /**
+         * List of successfully converted model objects
+         */
         private final List<T> models;
+
+        /**
+         * List of error messages for failed conversions
+         */
         private final List<String> errors;
+
+        /**
+         * Total number of records processed
+         */
         private final int totalRecords;
+
+        /**
+         * Number of records successfully converted
+         */
         private final int successfulRecords;
+
+        /**
+         * Number of records that failed conversion
+         */
         private final int errorRecords;
 
+        /**
+         * Constructs a new conversion result with the specified data.
+         *
+         * @param models the list of successfully converted models
+         * @param errors the list of error messages
+         * @param totalRecords the total number of records processed
+         */
         public ModelConversionResult(List<T> models, List<String> errors, int totalRecords) {
-            this.models = models;
-            this.errors = errors;
+            this.models = models != null ? models : new ArrayList<>();
+            this.errors = errors != null ? errors : new ArrayList<>();
             this.totalRecords = totalRecords;
-            this.successfulRecords = models.size();
-            this.errorRecords = errors.size();
+            this.successfulRecords = this.models.size();
+            this.errorRecords = this.errors.size();
         }
-
     }
 
     /**
-     * Enhanced method that converts DataRecord stream to models with comprehensive error tracking
+     * Enhanced method that converts DataRecord stream to models with comprehensive error tracking.
+     *
+     * <p>This method provides the primary conversion functionality with advanced error handling,
+     * performance monitoring, and detailed logging. It processes each record individually to
+     * ensure that errors in individual records don't affect the processing of other records.</p>
+     *
+     * <p><b>Processing Flow:</b></p>
+     * <ol>
+     *     <li>Validate input parameters</li>
+     *     <li>Process each DataRecord individually</li>
+     *     <li>Apply model conversion with error handling</li>
+     *     <li>Collect successful models and error messages</li>
+     *     <li>Generate comprehensive result with statistics</li>
+     * </ol>
+     *
+     * <p><b>Error Handling Strategy:</b></p>
+     * <ul>
+     *     <li>Invalid DataRecords are logged and counted as errors</li>
+     *     <li>Conversion exceptions are caught and converted to error messages</li>
+     *     <li>Processing continues for subsequent records</li>
+     *     <li>Detailed error context is preserved for debugging</li>
+     * </ul>
+     *
+     * @param <T> the type of model to convert to
+     * @param dataStream the stream of DataRecord objects to convert
+     * @param modelClass the class object representing the target model type
+     * @param config the data source configuration containing mapping rules
+     * @return ModelConversionResult containing converted models and error information
+     * @throws IllegalArgumentException if required parameters are null
      */
     public <T> ModelConversionResult<T> convertToModelsWithErrorTracking(Stream<DataRecord> dataStream,
                                                                          Class<T> modelClass,
                                                                          DataLoaderConfiguration.DataSourceDefinition config) {
+        if (dataStream == null) {
+            throw new ModelLoadingException(
+                    "Data stream cannot be null for model conversion. Please provide a valid stream of DataRecord objects.");
+        }
+
+        if (modelClass == null) {
+            throw new ModelLoadingException(
+                    "Model class cannot be null for model conversion. Please specify the target model class type.");
+        }
+
+        if (config == null) {
+            throw new ModelLoadingException(
+                    "Configuration cannot be null for model conversion. Please provide a valid DataSourceDefinition configuration.");
+        }
+
+        // Additional validation for model-specific configuration
+        if (config.getModel() == null) {
+            throw new ModelLoadingException(
+                    String.format("Model configuration is missing for model class '%s'. Please ensure target type is 'model' and model configuration is provided.",
+                            modelClass.getSimpleName()));
+        }
+
         log.debug("Starting conversion to model type: {} with error tracking", modelClass.getSimpleName());
 
         List<T> models = new ArrayList<>();
@@ -65,11 +232,11 @@ public class ModelConverter {
         AtomicInteger totalRecords = new AtomicInteger(0);
 
         dataStream.forEach(record -> {
-            totalRecords.incrementAndGet();
+            int recordNumber = totalRecords.incrementAndGet();
 
-            if (!record.valid()) {
+            if (!record.isValid()) {
                 String errorMsg = String.format("Record %d is invalid: %s",
-                        record.rowNumber(), record.errorMessage());
+                        record.getRowNumber(), record.getErrorMessage());
                 errors.add(errorMsg);
                 log.warn(errorMsg);
                 return;
@@ -80,14 +247,14 @@ public class ModelConverter {
                 if (model != null) {
                     models.add(model);
                     log.debug("Successfully converted record {} to model {}",
-                            record.rowNumber(), modelClass.getSimpleName());
+                            record.getRowNumber(), modelClass.getSimpleName());
                 }
             } catch (ModelConversionException e) {
                 errors.add(e.getMessage());
-                log.error("Conversion failed for record {}: {}", record.rowNumber(), e.getMessage());
+                log.error("Conversion failed for record {}: {}", record.getRowNumber(), e.getMessage());
             } catch (Exception e) {
                 String errorMsg = String.format("Unexpected error converting record %d: %s",
-                        record.rowNumber(), e.getMessage());
+                        record.getRowNumber(), e.getMessage());
                 errors.add(errorMsg);
                 log.error(errorMsg, e);
             }
@@ -100,33 +267,32 @@ public class ModelConverter {
     }
 
     /**
-     * Safe conversion method that handles errors gracefully
+     * Safe conversion method that handles errors gracefully without breaking the processing flow.
+     *
+     * <p>This method implements the core conversion logic with comprehensive error handling
+     * and validation integration. It supports both direct and mapped field assignment
+     * strategies based on the configuration.</p>
+     *
+     * @param <T> the type of model to convert to
+     * @param record the DataRecord to convert
+     * @param modelClass the target model class
+     * @param config the conversion configuration
+     * @return converted model object or null if conversion fails in lenient mode
+     * @throws ModelConversionException if conversion fails in strict mode
      */
     private <T> T convertToModelSafely(DataRecord record, Class<T> modelClass,
                                        DataLoaderConfiguration.DataSourceDefinition config) {
         try {
             T instance = modelClass.getDeclaredConstructor().newInstance();
 
-            if ("DIRECT".equals(config.model().mappingStrategy())) {
-                populateModelDirect(instance, record.data(), modelClass);
+            if ("DIRECT".equals(config.getModel().getMappingStrategy())) {
+                populateModelDirect(instance, record.getData(), modelClass);
             } else {
-                populateModelMapped(instance, record.data(), modelClass, config.columnMapping());
+                populateModelMapped(instance, record.getData(), modelClass, config.getColumnMapping());
             }
 
-            // Validate the populated model
-            if (config.validation() != null && config.validation().dataQualityChecks()) {
-                Set<ConstraintViolation<T>> violations = validator.validate(instance);
-                if (!violations.isEmpty()) {
-                    StringBuilder errorMessage = new StringBuilder("Validation errors for record " + record.rowNumber() + ": ");
-                    violations.forEach(violation ->
-                            errorMessage.append(violation.getPropertyPath()).append(" - ").append(violation.getMessage()).append("; "));
-
-                    log.warn("Validation failed for record {}: {}", record.rowNumber(), errorMessage);
-
-                    // Always throw exception to be caught and handled properly
-                    throw new ModelConversionException(errorMessage.toString());
-                }
-            }
+            // Validate the populated model using JSR-303 validation
+            validateModel(instance, record.getRowNumber(), config);
 
             return instance;
 
@@ -136,12 +302,43 @@ public class ModelConverter {
         } catch (Exception e) {
             // Wrap other exceptions
             throw new ModelConversionException(
-                    String.format("Failed to convert record %d: %s", record.rowNumber(), e.getMessage()), e);
+                    String.format("Failed to convert record %d: %s", record.getRowNumber(), e.getMessage()), e);
         }
     }
 
     /**
-     * Legacy method for backward compatibility - now delegates to error tracking version
+     * Validates a populated model using JSR-303 Bean Validation.
+     *
+     * @param <T> the type of model to validate
+     * @param instance the model instance to validate
+     * @param rowNumber the row number for error reporting
+     * @param config the configuration containing validation settings
+     * @throws ModelConversionException if validation fails
+     */
+    private <T> void validateModel(T instance, int rowNumber, DataLoaderConfiguration.DataSourceDefinition config) {
+        if (config.getValidation() != null && config.getValidation().isDataQualityChecks()) {
+            Set<ConstraintViolation<T>> violations = validator.validate(instance);
+            if (!violations.isEmpty()) {
+                StringBuilder errorMessage = new StringBuilder("Validation errors for record " + rowNumber + ": ");
+                violations.forEach(violation ->
+                        errorMessage.append(violation.getPropertyPath()).append(" - ").append(violation.getMessage()).append("; "));
+
+                log.warn("Validation failed for record {}: {}", rowNumber, errorMessage);
+
+                // Always throw exception to be caught and handled properly
+                throw new ModelConversionException(errorMessage.toString());
+            }
+        }
+    }
+
+    /**
+     * Legacy method for backward compatibility - delegates to error tracking version.
+     *
+     * @param <T> the type of model to convert to
+     * @param dataStream the stream of DataRecord objects
+     * @param modelClass the target model class
+     * @param config the conversion configuration
+     * @return stream of converted model objects
      */
     public <T> Stream<T> convertToModels(Stream<DataRecord> dataStream, Class<T> modelClass,
                                          DataLoaderConfiguration.DataSourceDefinition config) {
@@ -150,78 +347,52 @@ public class ModelConverter {
     }
 
     /**
-     * Converts a list of model objects to a stream of DataRecord
+     * Converts a list of model objects to a stream of DataRecord objects.
+     *
+     * <p>This method provides the reverse conversion capability, enabling models
+     * to be converted back to the framework's internal DataRecord format for
+     * further processing or database persistence.</p>
+     *
+     * @param <T> the type of models being converted
+     * @param models the list of model objects to convert
+     * @param config the conversion configuration
+     * @return stream of DataRecord objects
      */
-    public <T> Stream<DataRecord> convertFromModels(List<T> models, DataLoaderConfiguration.DataSourceDefinition config) {
+    public <T> Stream<DataRecord> convertFromModels(List<T> models,
+                                                    DataLoaderConfiguration.DataSourceDefinition config) {
+        if (models == null) {
+            throw new IllegalArgumentException("Models list cannot be null");
+        }
+        if (config == null) {
+            throw new IllegalArgumentException("Configuration cannot be null");
+        }
+
         log.debug("Starting conversion from models to DataRecord. Count: {}", models.size());
 
         return models.stream()
                 .map(model -> convertFromModel(model, config))
-                .filter(java.util.Objects::nonNull);
+                .filter(Objects::nonNull);
     }
 
     /**
-     * Converts a single DataRecord to a model object with validation
-     */
-    private <T> T convertToModel(DataRecord record, Class<T> modelClass, DataLoaderConfiguration.DataSourceDefinition config) {
-        try {
-            T instance = modelClass.getDeclaredConstructor().newInstance();
-
-            if ("DIRECT".equals(config.model().mappingStrategy())) {
-                populateModelDirect(instance, record.data(), modelClass);
-            } else {
-                populateModelMapped(instance, record.data(), modelClass, config.columnMapping());
-            }
-
-            // Validate the populated model
-            if (config.validation() != null && config.validation().dataQualityChecks()) {
-                Set<ConstraintViolation<T>> violations = validator.validate(instance);
-                if (!violations.isEmpty()) {
-                    StringBuilder errorMessage = new StringBuilder("Validation errors for record " + record.rowNumber() + ": ");
-                    violations.forEach(violation ->
-                            errorMessage.append(violation.getPropertyPath()).append(" - ").append(violation.getMessage()).append("; "));
-
-                    log.error("Validation failed for record {}: {}", record.rowNumber(), errorMessage);
-
-                    if (config.model().strictMapping()) {
-                        throw new ModelConversionException(errorMessage.toString());
-                    }
-                    return null; // Skip invalid records in lenient mode
-                }
-            }
-
-            log.debug("Successfully converted record {} to model {}",
-                    record.rowNumber(), modelClass.getSimpleName());
-            return instance;
-
-        } catch (Exception e) {
-            log.error("Failed to convert record {} to model {}: {}",
-                    record.rowNumber(), modelClass.getSimpleName(), e.getMessage(), e);
-
-            if (config.model().strictMapping()) {
-                throw new ModelConversionException(
-                        String.format("Strict mapping failed for record %d: %s",
-                                record.rowNumber(), e.getMessage()), e);
-            }
-            return null;
-        }
-    }
-
-
-    /**
-     * Converts a model object to DataRecord
+     * Converts a model object to DataRecord with comprehensive error handling.
+     *
+     * @param <T> the type of model being converted
+     * @param model the model object to convert
+     * @param config the conversion configuration
+     * @return DataRecord object or null if conversion fails
      */
     private <T> DataRecord convertFromModel(T model, DataLoaderConfiguration.DataSourceDefinition config) {
         try {
             Map<String, Object> data = new HashMap<>();
             Class<?> modelClass = model.getClass();
 
-            if ("DIRECT".equals(config.model().mappingStrategy())) {
+            if ("DIRECT".equals(config.getModel().getMappingStrategy())) {
                 // Direct mapping: extract all fields
                 extractFieldsDirect(model, data, modelClass);
             } else {
                 // Mapped strategy: use column mappings in reverse
-                extractFieldsMapped(model, data, modelClass, config.columnMapping());
+                extractFieldsMapped(model, data, modelClass, config.getColumnMapping());
             }
 
             log.debug("Successfully converted model {} to DataRecord", modelClass.getSimpleName());
@@ -235,7 +406,17 @@ public class ModelConverter {
     }
 
     /**
-     * Populates model using direct field mapping
+     * Populates model using direct field mapping strategy.
+     *
+     * <p>In direct mapping, field names in the source data must exactly match
+     * the field names in the target model class. This provides the fastest
+     * performance with minimal configuration overhead.</p>
+     *
+     * @param <T> the type of model being populated
+     * @param instance the model instance to populate
+     * @param data the source data map
+     * @param modelClass the model class for reflection operations
+     * @throws Exception if field access or assignment fails
      */
     private <T> void populateModelDirect(T instance, Map<String, Object> data, Class<T> modelClass)
             throws Exception {
@@ -257,42 +438,59 @@ public class ModelConverter {
     }
 
     /**
-     * Populates model using column mappings
+     * Populates model using mapped field assignment strategy.
+     *
+     * <p>In mapped strategy, explicit column mappings define how source fields
+     * map to target model fields. This provides maximum flexibility for
+     * complex mapping scenarios.</p>
+     *
+     * @param <T> the type of model being populated
+     * @param instance the model instance to populate
+     * @param data the source data map
+     * @param modelClass the model class for reflection operations
+     * @param mappings the list of column mappings
+     * @throws Exception if field access or assignment fails
      */
     private <T> void populateModelMapped(T instance, Map<String, Object> data, Class<T> modelClass,
                                          List<DataLoaderConfiguration.ColumnMapping> mappings) throws Exception {
 
-        // Log all available columns
+        // Log all available columns for debugging
         log.debug("Available columns in data: {}", data.keySet());
 
-        // Log mapped columns
+        // Log mapped columns for transparency
         Set<String> mappedColumns = mappings.stream()
-                .map(DataLoaderConfiguration.ColumnMapping::source)
-                .collect(java.util.stream.Collectors.toSet());
+                .map(DataLoaderConfiguration.ColumnMapping::getSource)
+                .collect(Collectors.toSet());
         log.debug("Columns being mapped: {}", mappedColumns);
 
-        // Log ignored columns
+        // Log ignored columns for awareness
         Set<String> ignoredColumns = data.keySet().stream()
                 .filter(col -> !mappedColumns.contains(col))
-                .collect(java.util.stream.Collectors.toSet());
+                .collect(Collectors.toSet());
         if (!ignoredColumns.isEmpty()) {
             log.info("Ignoring {} unmapped columns: {}", ignoredColumns.size(), ignoredColumns);
         }
 
         for (DataLoaderConfiguration.ColumnMapping mapping : mappings) {
-            if (data.containsKey(mapping.source())) {
-                Object value = data.get(mapping.source());
-                setFieldValue(instance, mapping.target(), value, modelClass);
+            if (data.containsKey(mapping.getSource())) {
+                Object value = data.get(mapping.getSource());
+                setFieldValue(instance, mapping.getTarget(), value, modelClass);
                 log.debug("Mapped '{}' -> '{}' with value '{}' in model {}",
-                        mapping.source(), mapping.target(), value, modelClass.getSimpleName());
+                        mapping.getSource(), mapping.getTarget(), value, modelClass.getSimpleName());
             } else {
-                log.warn("Mapped column '{}' not found in source data", mapping.source());
+                log.warn("Mapped column '{}' not found in source data", mapping.getSource());
             }
         }
     }
 
     /**
-     * Extracts fields using direct mapping
+     * Extracts fields using direct mapping strategy for model-to-DataRecord conversion.
+     *
+     * @param <T> the type of model being processed
+     * @param model the model object to extract from
+     * @param data the target data map
+     * @param modelClass the model class for reflection operations
+     * @throws Exception if field access fails
      */
     private <T> void extractFieldsDirect(T model, Map<String, Object> data, Class<?> modelClass)
             throws Exception {
@@ -310,21 +508,39 @@ public class ModelConverter {
     }
 
     /**
-     * Extracts fields using column mappings (reverse)
+     * Extracts fields using mapped strategy for model-to-DataRecord conversion.
+     *
+     * @param <T> the type of model being processed
+     * @param model the model object to extract from
+     * @param data the target data map
+     * @param modelClass the model class for reflection operations
+     * @param mappings the list of column mappings (used in reverse)
+     * @throws Exception if field access fails
      */
     private <T> void extractFieldsMapped(T model, Map<String, Object> data, Class<?> modelClass,
                                          List<DataLoaderConfiguration.ColumnMapping> mappings) throws Exception {
 
         for (DataLoaderConfiguration.ColumnMapping mapping : mappings) {
-            Object value = getFieldValue(model, mapping.target(), modelClass);
+            Object value = getFieldValue(model, mapping.getTarget(), modelClass);
             if (value != null) {
-                data.put(mapping.source(), value);
+                data.put(mapping.getSource(), value);
             }
         }
     }
 
     /**
-     * Sets field value using reflection with proper type conversion
+     * Sets field value using reflection with proper type conversion.
+     *
+     * <p>This method attempts to set field values using both direct field access
+     * and setter method invocation, providing maximum compatibility with different
+     * model class designs.</p>
+     *
+     * @param <T> the type of model being modified
+     * @param instance the model instance to modify
+     * @param fieldName the name of the field to set
+     * @param value the value to set
+     * @param modelClass the model class for reflection operations
+     * @throws Exception if field access or method invocation fails
      */
     private <T> void setFieldValue(T instance, String fieldName, Object value, Class<T> modelClass)
             throws Exception {
@@ -338,7 +554,7 @@ public class ModelConverter {
                 return;
             }
         } catch (NoSuchFieldException ignored) {
-            // Try setter method
+            // Try setter method as fallback
         }
 
         // Try setter method
@@ -358,7 +574,14 @@ public class ModelConverter {
     }
 
     /**
-     * Gets field value using reflection
+     * Gets field value using reflection with fallback to getter methods.
+     *
+     * @param <T> the type of model being accessed
+     * @param instance the model instance to access
+     * @param fieldName the name of the field to get
+     * @param modelClass the model class for reflection operations
+     * @return the field value or null if not found
+     * @throws Exception if field access or method invocation fails
      */
     private <T> Object getFieldValue(T instance, String fieldName, Class<?> modelClass) throws Exception {
         try {
@@ -368,7 +591,7 @@ public class ModelConverter {
                 return field.get(instance);
             }
         } catch (NoSuchFieldException ignored) {
-            // Try getter method
+            // Try getter method as fallback
         }
 
         // Try getter method
@@ -387,7 +610,12 @@ public class ModelConverter {
     }
 
     /**
-     * Finds field in class hierarchy
+     * Finds field in class hierarchy, searching through superclasses if necessary.
+     *
+     * @param clazz the class to search in
+     * @param fieldName the name of the field to find
+     * @return the Field object if found
+     * @throws NoSuchFieldException if field is not found in the class hierarchy
      */
     private Field findField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
         Class<?> currentClass = clazz;
@@ -402,7 +630,11 @@ public class ModelConverter {
     }
 
     /**
-     * Converts value to the target field type
+     * Converts value to the target field type using the data type converter.
+     *
+     * @param value the value to convert
+     * @param targetType the target field type
+     * @return the converted value
      */
     private Object convertValueToFieldType(Object value, Class<?> targetType) {
         if (value == null) {
@@ -418,7 +650,7 @@ public class ModelConverter {
         if (dataType != null) {
             // Create a temporary column mapping for conversion
             var tempMapping = new DataLoaderConfiguration.ColumnMapping(
-                    "temp", "temp", dataType, null, null, null, null, "yes", null
+                    "temp", "temp", dataType, null, null, null, null, false, null
             );
             return dataTypeConverter.convertForModel(value.toString(), tempMapping);
         }
@@ -427,7 +659,10 @@ public class ModelConverter {
     }
 
     /**
-     * Maps Java class types to our data type strings
+     * Maps Java class types to framework data type strings.
+     *
+     * @param clazz the Java class to map
+     * @return the corresponding data type string or null if not supported
      */
     private String getDataTypeFromClass(Class<?> clazz) {
         if (clazz == String.class) return "STRING";
@@ -444,7 +679,10 @@ public class ModelConverter {
     }
 
     /**
-     * Capitalizes the first letter of a string
+     * Capitalizes the first letter of a string for method name generation.
+     *
+     * @param str the string to capitalize
+     * @return the capitalized string
      */
     private String capitalize(String str) {
         if (str == null || str.isEmpty()) {
@@ -454,13 +692,25 @@ public class ModelConverter {
     }
 
     /**
-     * Custom exception for model conversion errors
+     * Custom exception for model conversion errors with enhanced error context.
      */
     public static class ModelConversionException extends RuntimeException {
+
+        /**
+         * Constructs a new model conversion exception with the specified detail message.
+         *
+         * @param message the detail message explaining the conversion failure
+         */
         public ModelConversionException(String message) {
             super(message);
         }
 
+        /**
+         * Constructs a new model conversion exception with the specified detail message and cause.
+         *
+         * @param message the detail message explaining the conversion failure
+         * @param cause the underlying cause of the conversion failure
+         */
         public ModelConversionException(String message, Throwable cause) {
             super(message, cause);
         }

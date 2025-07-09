@@ -1,7 +1,7 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.0'
-    id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.springframework.boot' version '2.7.18'
+    id 'io.spring.dependency-management' version '1.0.15.RELEASE'
 }
 
 group = 'com.java.lld.oops'
@@ -9,7 +9,7 @@ version = '0.0.1-SNAPSHOT'
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(11)
     }
 }
 
@@ -24,30 +24,30 @@ repositories {
 }
 
 dependencies {
+    // Spring Boot dependencies
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
 
-    // Lombok dependencies
+    // PostgreSQL driver
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // Apache Commons CSV
+    implementation 'org.apache.commons:commons-csv:1.10.0'
+
+    // SLF4J for logging with Lombok @Slf4j
+    implementation 'org.slf4j:slf4j-api:1.7.36'
+
+    // Lombok (compile-time only)
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
-
-    // Add SLF4J API for Lombok @Slf4j annotation
-    implementation 'org.slf4j:slf4j-api:2.0.7'
 
     // Test dependencies
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testCompileOnly 'org.projectlombok:lombok'
     testAnnotationProcessor 'org.projectlombok:lombok'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
-    // apache commons CSV
-    implementation 'org.apache.commons:commons-csv:1.10.0'
-
-    // postgres
-    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
-    runtimeOnly 'org.postgresql:postgresql'
 }
-
 
 tasks.named('test') {
     useJUnitPlatform()
