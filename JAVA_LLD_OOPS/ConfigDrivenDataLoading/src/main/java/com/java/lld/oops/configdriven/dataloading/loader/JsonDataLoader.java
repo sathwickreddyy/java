@@ -319,8 +319,7 @@ public class JsonDataLoader implements DataLoader {
                 Object value = extractValueFromPath(node, sourcePath);
 
                 if (value != null) {
-                    // FIXED: Store using TARGET field name, not source path
-                    data.put(targetField, value);  // Use targetField instead of sourcePath
+                    data.put(sourcePath, value);
                     log.trace("Row {}: Mapped '{}' -> '{}' with value: {}",
                             rowNumber, sourcePath, targetField, value);
                 } else if (mapping.getDefaultValue() != null) {
