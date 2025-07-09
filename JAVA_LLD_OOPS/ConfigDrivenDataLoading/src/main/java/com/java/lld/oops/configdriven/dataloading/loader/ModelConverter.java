@@ -650,7 +650,7 @@ public class ModelConverter {
         if (dataType != null) {
             // Create a temporary column mapping for conversion
             var tempMapping = new DataLoaderConfiguration.ColumnMapping(
-                    "temp", "temp", dataType, null, null, null, null, false, null
+                    "temp", "temp", dataType, null, null, null, null, true, null
             );
             return dataTypeConverter.convertForModel(value.toString(), tempMapping);
         }

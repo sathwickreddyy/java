@@ -278,13 +278,11 @@ public class DataLoaderConfiguration {
         /**
          * Database schema name for table targets.
          */
-        @NotBlank(message = "Schema cannot be blank")
         private String schema;
 
         /**
          * Target table name or model identifier.
          */
-        @NotBlank(message = "Table/Type cannot be blank")
         private String table;
 
         /**
