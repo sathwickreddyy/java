@@ -22,15 +22,15 @@ public class UserProfileDTO {
 //    @NotBlank(message = "User ID is required")
     private String userId;
 
-//    @NotBlank(message = "First name is required")
+    @NotBlank(message = "First name is required")
     @Size(min = 1, max = 50, message = "First name must be between 1 and 50 characters")
     private String firstName;
 
-//    @NotBlank(message = "Last name is required")
+    @NotBlank(message = "Last name is required")
     @Size(min = 1, max = 50, message = "Last name must be between 1 and 50 characters")
     private String lastName;
 
-//    @NotBlank(message = "Email is required")
+    @NotBlank(message = "Email is required")
     @Email(message = "Email must be valid")
     private String email;
 

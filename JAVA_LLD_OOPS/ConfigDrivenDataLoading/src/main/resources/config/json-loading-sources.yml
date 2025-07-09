@@ -3,7 +3,6 @@ data-sourcing:
   data-sources:
     # Simple JSON object mapping
     user_profile_json:
-      identifier: "UserProfileJSON"
       type: "JSON"
       source:
         filePath: "src/main/resources/sample-data/user_profiles.json"
@@ -37,54 +36,57 @@ data-sourcing:
       model:
         className: "UserProfileDTO"
         mappingStrategy: "MAPPED"
-        strictMapping: false
+        strictMapping: true
       validation:
         requiredColumns: ["id", "profile.personal.firstName"]
         dataQualityChecks: true
 
     # Complex nested JSON with JSONPath
     order_details_json:
-      identifier: "OrderDetailsJSON"
       type: "JSON"
       source:
         filePath: "src/main/resources/sample-data/orders.json"
         jsonPath: "$.orders[*]"
       target:
-        type: "table"
+        type: "model"
       columnMapping:
         - source: "orderId"
-          target: "order_id"
+          target: "orderId"
           dataType: "STRING"
           required: true
         - source: "customer.profile.name"
-          target: "customer_name"
+          target: "customerName"
           dataType: "STRING"
           required: true
         - source: "customer.contact.email"
-          target: "customer_email"
+          target: "customerEmail"
           dataType: "STRING"
         - source: "orderDetails.items[0].product.name"
-          target: "primary_product"
+          target: "primaryProduct"
           dataType: "STRING"
         - source: "orderDetails.items[0].quantity"
-          target: "primary_quantity"
+          target: "primaryQuantity"
           dataType: "INTEGER"
         - source: "orderDetails.pricing.total"
-          target: "total_amount"
+          target: "totalAmount"
           dataType: "BIGDECIMAL"
         - source: "orderDetails.shipping.address.city"
-          target: "shipping_city"
+          target: "shippingCity"
           dataType: "STRING"
         - source: "orderDetails.shipping.address.zipCode"
-          target: "shipping_zip"
+          target: "shippingZip"
           dataType: "STRING"
         - source: "timestamps.created"
-          target: "created_date"
+          target: "createdDate"
           dataType: "LOCALDATETIME"
           sourceDateFormat: "yyyy-MM-dd'T'HH:mm:ss'Z'"
       validation:
         requiredColumns: ["orderId", "customer.profile.name"]
         dataQualityChecks: true
+      model:
+        className: "OrderDetailsDTO"
+        mappingStrategy: "MAPPED"
+        strictMapping: true
 
 #    # JSONPath with conditional filtering
 #    active_products_json:

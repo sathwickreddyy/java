@@ -570,7 +570,7 @@ public class ModelConverter {
             }
         }
 
-        log.warn("Could not find field or setter for '{}' in class {}", fieldName, modelClass.getSimpleName());
+        log.error("Could not find field or setter for '{}' in class {}", fieldName, modelClass.getSimpleName());
     }
 
     /**

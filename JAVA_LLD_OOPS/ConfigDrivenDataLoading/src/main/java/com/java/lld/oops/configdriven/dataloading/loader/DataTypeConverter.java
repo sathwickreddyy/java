@@ -99,7 +99,8 @@ public class DataTypeConverter {
      */
     private static final List<String> COMMON_DATETIME_PATTERNS = Arrays.asList(
             "yyyy-MM-dd HH:mm:ss", "MM/dd/yyyy HH:mm:ss", "dd-MM-yyyy HH:mm:ss",
-            "yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd'T'HH:mm:ss.SSS", "ISO_LOCAL_DATE_TIME"
+            "yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd'T'HH:mm:ss.SSS", "ISO_LOCAL_DATE_TIME",
+            "yyyy-MM-dd'T'HH:mm:ssX"
     );
 
     /**
