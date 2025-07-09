@@ -1,8 +1,6 @@
 package com.java.lld.oops.configdriven.dataloading;
 
-import com.java.lld.oops.configdriven.dataloading.dto.MarketDataDTO;
-import com.java.lld.oops.configdriven.dataloading.dto.PortfolioDTO;
-import com.java.lld.oops.configdriven.dataloading.dto.RiskMetricsDTO;
+import com.java.lld.oops.configdriven.dataloading.dto.*;
 import com.java.lld.oops.configdriven.dataloading.model.ModelLoadingResult;
 import com.java.lld.oops.configdriven.dataloading.service.DataOrchestrator;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +50,8 @@ public class ConfigDrivenDataLoadingApplication implements CommandLineRunner {
 
         // Test Scenario 8: Risk Metrics with Financial Validation
         testScenario8_RiskMetrics();
+
+        testScenario9_JsonNestedMapping();
 
         log.info("All test scenarios completed");
     }
@@ -187,6 +187,29 @@ public class ConfigDrivenDataLoadingApplication implements CommandLineRunner {
             result.getModels().forEach(model -> System.out.println(" - " + model));
         }
     }
+
+    private void testScenario9_JsonNestedMapping() {
+        log.info("=== Test Scenario 9: JSON Nested Path Mapping ===");
+        try {
+            // Test user profile with nested paths
+            ModelLoadingResult<UserProfileDTO> userResult = dataOrchestrator.executeModelLoading(
+                    "user_profile_json", UserProfileDTO.class);
+            printModelLoadingResult(userResult);
+
+            // Test order details with complex nested structure
+            ModelLoadingResult<OrderDetailsDTO> orderResult = dataOrchestrator.executeModelLoading("order_details_json", OrderDetailsDTO.class);
+            printModelLoadingResult(orderResult);
+
+            // Test JSONPath filtering
+//            ModelLoadingResult<ProductDTO> productResult = dataOrchestrator.executeModelLoading(
+//                    "active_products_json", ProductDTO.class);
+//            printModelLoadingResult(productResult);
+
+        } catch (Exception e) {
+            log.error("Error in JSON nested mapping scenario: {}", e.getMessage(), e);
+        }
+    }
+
 
     public static void main(String[] args) {
         SpringApplication.run(ConfigDrivenDataLoadingApplication.class, args);

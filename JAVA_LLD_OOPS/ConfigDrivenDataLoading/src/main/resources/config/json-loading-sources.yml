@@ -1,0 +1,133 @@
+# Enhanced data-sources.yml with nested JSON path support
+data-sourcing:
+  data-sources:
+    # Simple JSON object mapping
+    user_profile_json:
+      identifier: "UserProfileJSON"
+      type: "JSON"
+      source:
+        filePath: "src/main/resources/sample-data/user_profiles.json"
+        jsonPath: "$.users[*]"
+      target:
+        type: "model"
+      columnMapping:
+        - source: "id"
+          target: "userId"
+          dataType: "STRING"
+          required: true
+        - source: "profile.personal.firstName"
+          target: "firstName"
+          dataType: "STRING"
+          required: true
+        - source: "profile.personal.lastName"
+          target: "lastName"
+          dataType: "STRING"
+          required: true
+        - source: "profile.contact.email"
+          target: "email"
+          dataType: "STRING"
+          required: true
+        - source: "profile.contact.addresses[0].city"
+          target: "city"
+          dataType: "STRING"
+        - source: "profile.contact.addresses[0].country"
+          target: "country"
+          dataType: "STRING"
+          defaultValue: "USA"
+      model:
+        className: "UserProfileDTO"
+        mappingStrategy: "MAPPED"
+        strictMapping: false
+      validation:
+        requiredColumns: ["id", "profile.personal.firstName"]
+        dataQualityChecks: true
+
+    # Complex nested JSON with JSONPath
+    order_details_json:
+      identifier: "OrderDetailsJSON"
+      type: "JSON"
+      source:
+        filePath: "src/main/resources/sample-data/orders.json"
+        jsonPath: "$.orders[*]"
+      target:
+        type: "table"
+      columnMapping:
+        - source: "orderId"
+          target: "order_id"
+          dataType: "STRING"
+          required: true
+        - source: "customer.profile.name"
+          target: "customer_name"
+          dataType: "STRING"
+          required: true
+        - source: "customer.contact.email"
+          target: "customer_email"
+          dataType: "STRING"
+        - source: "orderDetails.items[0].product.name"
+          target: "primary_product"
+          dataType: "STRING"
+        - source: "orderDetails.items[0].quantity"
+          target: "primary_quantity"
+          dataType: "INTEGER"
+        - source: "orderDetails.pricing.total"
+          target: "total_amount"
+          dataType: "BIGDECIMAL"
+        - source: "orderDetails.shipping.address.city"
+          target: "shipping_city"
+          dataType: "STRING"
+        - source: "orderDetails.shipping.address.zipCode"
+          target: "shipping_zip"
+          dataType: "STRING"
+        - source: "timestamps.created"
+          target: "created_date"
+          dataType: "LOCALDATETIME"
+          sourceDateFormat: "yyyy-MM-dd'T'HH:mm:ss'Z'"
+      validation:
+        requiredColumns: ["orderId", "customer.profile.name"]
+        dataQualityChecks: true
+
+#    # JSONPath with conditional filtering
+#    active_products_json:
+#      identifier: "ActiveProductsJSON"
+#      type: "JSON"
+#      source:
+#        filePath: "src/main/resources/sample-data/user_profiles.json"
+#        jsonPath: "$.products[?(@.status == 'active')]"
+#      target:
+#        type: "model"
+#      columnMapping:
+#        - source: "productId"
+#          target: "productId"
+#          dataType: "STRING"
+#          required: true
+#        - source: "details.name"
+#          target: "productName"
+#          dataType: "STRING"
+#          required: true
+#        - source: "details.description"
+#          target: "description"
+#          dataType: "STRING"
+#        - source: "pricing.basePrice"
+#          target: "basePrice"
+#          dataType: "BIGDECIMAL"
+#        - source: "pricing.currency"
+#          target: "currency"
+#          dataType: "STRING"
+#          defaultValue: "USD"
+#        - source: "inventory.quantity"
+#          target: "stockQuantity"
+#          dataType: "INTEGER"
+#        - source: "categories[0]"
+#          target: "primaryCategory"
+#          dataType: "STRING"
+#        - source: "metadata.createdAt"
+#          target: "createdDate"
+#          dataType: "LOCALDATE"
+#          sourceDateFormat: "yyyy-MM-dd"
+#      model:
+#        className: "ProductDTO"
+#        mappingStrategy: "MAPPED"
+#        strictMapping: false
+#      validation:
+#        requiredColumns: ["productId", "details.name"]
+#        dataQualityChecks: true
